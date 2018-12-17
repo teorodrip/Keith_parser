@@ -2,10 +2,13 @@ import xlwings as xw
 import threading
 from srcs.excel import excel
 from srcs.class_sql_db import ClassSqlDb
+from xml.etree.ElementInclude import include
+import time
 
 # MACROS
 ##########################################################################################
 
+N_THREADS = 1
 FILE_PATH = r"C:\Users\stagiaire3\Desktop\workspace\data_scrapping\Excel_scrapper\Keith_parser\Croissance_Marges_100.xlsb"
 
 # postgres parameters
@@ -54,3 +57,21 @@ def get_tickers(remainings=False):
         return (results)
     except ValueError:
         print(ValueError)
+        
+def write_tickers(start, end, inc, ex):
+    while start < end:
+        print("Writing(" + str(end) + "): [" + str(start) + ":" + str(start + inc) + "] -> ")# + str(tickers[start:inc]))
+        ex.write_col("A4", tickers[start:(start + inc)])
+        break
+        start += inc
+
+def write_remaining_tickers(start, end, inc, ex):
+    tmp = start
+    while start < end:
+        tmp += inc
+        if tmp > end:
+            tmp = end
+        print("Writing(" + str(end) + "): [" + str(start) + ":" + str(tmp) + "] -> ")# + str(tickers[start:inc]))
+        ex.write_col("A4", tickers[start:tmp])
+        time.sleep(100)
+        start = tmp
