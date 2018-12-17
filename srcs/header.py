@@ -8,7 +8,7 @@ import time
 # MACROS
 ##########################################################################################
 
-N_THREADS = 1
+N_THREADS = 10
 FILE_PATH = r"C:\Users\stagiaire3\Desktop\workspace\data_scrapping\Excel_scrapper\Keith_parser\Croissance_Marges_100.xlsb"
 
 # postgres parameters

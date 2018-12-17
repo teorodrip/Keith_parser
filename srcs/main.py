@@ -12,7 +12,7 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
     start = index * tick_div
     end  = tick_div * index + tick_div
     while start < end:
-        print("Writing(" + str(end) + "): [" + str(start) + ":" + str(start + SHEET_ROWS) + "] -> ")# + str(tickers[start:inc]))
+        print("Writing(" + str(index * tick_div) + "-" + str(end) + "): [" + str(start) + ":" + str(start + SHEET_ROWS) + "] -> ")# + str(tickers[start:inc]))
         ex.write_col("A4", tickers[start:(start + SHEET_ROWS)])
 #         time.sleep(3)
         start += SHEET_ROWS
@@ -24,7 +24,7 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
             tmp += SHEET_ROWS
             if tmp > remaining:
                 tmp = remaining
-            print("Writing(" + str(remaining) + "): [" + str(end) + ":" + str(tmp) + "] -> ")# + str(tickers[start:inc]))
+            print("Writing("  + str(tick_div * index + tick_div) + "-" + str(remaining) + "): [" + str(end) + ":" + str(tmp) + "] -> ")# + str(tickers[start:inc]))
             ex.write_col("A4", tickers[end:tmp])
 #             time.sleep(3)
             end = tmp
@@ -49,6 +49,8 @@ def init_threads(n_threads=0, daem=False):
     for i in range(n_threads):
         try:
             app = xw.App()
+            #app.screen_updating = False
+            app.visible = False
             pid = app.pid
             thr = threading.Thread(target=thread_main, args=[FILE_PATH, pid, i, n_threads])
             app_arr.append(app)
@@ -56,7 +58,7 @@ def init_threads(n_threads=0, daem=False):
             threads.append(thr)
             thr.daemon = daem
             thr.start()
-            print("Created thread %d associated with Excel pid %d\n" % (i, pid))
+            print("Created thread %d associated with Excel pid %d" % (i, pid))
         except ValueError:
             print(ValueError)
 
