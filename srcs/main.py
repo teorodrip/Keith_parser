@@ -15,23 +15,25 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 	tmp = start
 	retrial_tickers = []
 	tickers_to_delete = []
-	while start < end:
+	final_data = []
+	while (start < end) or (len(retrial_tickers) != 0):
 		tmp += (DATA_ROWS - len(retrial_tickers))
 		if tmp > end:
 			tmp = end
 		ticker_col = retrial_tickers + tickers[start:tmp]
 		ex.write_col(DATA_BEGIN, ticker_col)
 		data = ex.get_range(ex.sheet.range((4, 1), (SHEET_ROWS, SHEET_COLS)))
-		parse_data(data, retrial_tickers, tickers_to_delete)
+		parse_data(data, retrial_tickers, tickers_to_delete, final_data)
 		start = tmp
-		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]\n===========================" % (index, start - len(retrial_tickers) - len(tickers_to_delete), end, len(retrial_tickers), end, len(tickers_to_delete), end))
-	print("Tickers to delete: " + str(tickers_to_delete))
+		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]\n===========================" % (index, tmp - (index * tick_div) - len(retrial_tickers) - len(tickers_to_delete), end - (index * tick_div), len(retrial_tickers), end - (index * tick_div), len(tickers_to_delete), end - (index * tick_div)))
+	tickers_ok += end - (index * tick_div) - len(tickers_to_delete)
+	tickers_delete += len(tickers_to_delete)
 
 def init_threads(n_threads=0, daem=False):
 	for i in range(n_threads):
 		try:
 			app = xw.App()
-			app.visible = True
+			app.visible = False
 			pid = app.pid
 			thr = threading.Thread(target=thread_main, args=[FILE_PATH, pid, i, n_threads])
 			app_arr.append(app)
@@ -42,6 +44,12 @@ def init_threads(n_threads=0, daem=False):
 			print("Created thread %d associated with Excel pid %d" % (i, pid))
 		except ValueError:
 			print(ValueError)
+	for i in range(n_threads):
+		try:
+			threads[i].join()
+		except ValueError:
+			print(ValueError)
+	print("Total tickers processed well: %d\nTotal tickers to delete: %d" % (tickers_ok, tickers_delete))
 
 if __name__ == '__main__':
 	tickers = get_tickers()
