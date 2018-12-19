@@ -24,7 +24,7 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 		data = ex.get_range(ex.sheet.range((4, 1), (SHEET_ROWS, SHEET_COLS)))
 		parse_data(data, retrial_tickers, tickers_to_delete)
 		start = tmp
-		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]===========================" % (index, start - len(retrial_tickers) - len(tickers_to_delete), end, len(retrial_tickers), end, len(tickers_to_delete), end))
+		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]\n===========================" % (index, start - len(retrial_tickers) - len(tickers_to_delete), end, len(retrial_tickers), end, len(tickers_to_delete), end))
 	print("Tickers to delete: " + str(tickers_to_delete))
 
 def init_threads(n_threads=0, daem=False):
