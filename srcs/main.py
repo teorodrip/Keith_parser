@@ -5,37 +5,27 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 	ex = excel(app, path, 0)
 	ex.del_book(0)
 	n_tickers = len(tickers)
-	print("Got %d tickers." % n_tickers)
 	tick_div =  n_tickers // n_threads
-	row_remaining = (tick_div % DATA_ROWS)
-	tick_div = tick_div - row_remaining
 	start = index * tick_div
 	end  = tick_div * index + tick_div
 
-	# Write tickers mudule DATA_ROWS
-	while start < end:
-		print("Writing(" + str(index * tick_div) + "-" + str(end) + "): [" + str(start) + ":" + str(start + DATA_ROWS) + "] -> ")# + str(tickers[start:inc]))
-		ex.write_col(DATA_BEGIN, tickers[start:(start + DATA_ROWS)])
-		data = ex.get_range(ex.sheet.range((4, 2), (SHEET_ROWS, SHEET_COLS)))
-		parse_data(data, DATA_ROWS)
-		start += DATA_ROWS
-
-	# Write remaining tickers
-	remaining = end + row_remaining
 	if index == (n_threads - 1):
-		remaining += (n_tickers % n_threads)
-	print("Remaining: %d" % remaining)
-	tmp = end
-	while end < remaining:
-		tmp += DATA_ROWS
-		if tmp > remaining:
-			tmp = remaining
-		print("Writing("  + str(tick_div * index + tick_div) + "-" + str(remaining) + "): [" + str(end) + ":" + str(tmp) + "] -> ")# + str(tickers[start:inc]))
-		ex.write_col(DATA_BEGIN, tickers[end:tmp])
-		data = ex.get_range(ex.sheet.range((4, 2), (SHEET_ROWS, SHEET_COLS)))
-		parse_data(data, DATA_ROWS)
-		end = tmp
-	app.quit()
+		end += (n_tickers % n_threads)
+
+	tmp = start
+	retrial_tickers = []
+	tickers_to_delete = []
+	while start < end:
+		tmp += (DATA_ROWS - len(retrial_tickers))
+		if tmp > end:
+			tmp = end
+		ticker_col = retrial_tickers + tickers[start:tmp]
+		ex.write_col(DATA_BEGIN, ticker_col)
+		data = ex.get_range(ex.sheet.range((4, 1), (SHEET_ROWS, SHEET_COLS)))
+		parse_data(data, retrial_tickers, tickers_to_delete)
+		start = tmp
+		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]===========================" % (index, start - len(retrial_tickers) - len(tickers_to_delete), end, len(retrial_tickers), end, len(tickers_to_delete), end))
+	print("Tickers to delete: " + str(tickers_to_delete))
 
 def init_threads(n_threads=0, daem=False):
 	for i in range(n_threads):
@@ -55,6 +45,7 @@ def init_threads(n_threads=0, daem=False):
 
 if __name__ == '__main__':
 	tickers = get_tickers()
+	print("Got %d tickers." % len(tickers))
 	for ticker in tickers:
 		hash_retries.update({ticker: [0, 0, 0]})
 	init_threads(N_THREADS, daem=False)

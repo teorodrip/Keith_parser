@@ -33,7 +33,7 @@ SQL_REM_REQ = """
 """
 SHEET_COLS = 185
 SHEET_ROWS = 103
-DATA_COLS = 184
+DATA_COLS = 185
 DATA_ROWS = 100
 DATA_BEGIN = "A4"
 CIQINACTIVE_RTETRIES = 3
@@ -76,45 +76,32 @@ def get_tickers(remainings=False):
 	except ValueError:
 		print(ValueError)
         
-def write_tickers(start, end, inc, ex):
-	while start < end:
-		print("Writing(" + str(end) + "): [" + str(start) + ":" + str(start + inc) + "] -> ")# + str(tickers[start:inc]))
-		ex.write_col("A4", tickers[start:(start + inc)])
-		start += inc
-
-def parse_data (data, row_len, start, end):
-	for i in range(start, end):
-		data_slice = data[((i - start) * row_len):((i - start) * row_len + row_len)]
+def parse_data (data, retrial_tickers, tickers_to_delete):
+	#do it with bitfields in n time instead of 3n
+	for i in range(len(data)):
 		error = False
-		if ERR_CIQ in data_slice:
-			if hash_retries[i][0] < CIQINACTIVE_RTETRIES:
-				hash_retries[i][0] += 1
+		if ERR_CIQ in data[i]:
+			if hash_retries[data[i][0]][0] < CIQINACTIVE_RTETRIES:
+				hash_retries[data[i][0]][0] += 1
 				error = True
+				print("Error in " + data[i][0] + " [ERR_CIQ] => " + str(hash_retries[data[i][0]]))
 			# else:
 			# 	reboot
-		if ERR_INV in data_slice:
-			if hash_retries[i][1] < INVALID_IDNENTIFIER_RETRIES:
-				hash_retries[i][1] += 1
+		if ERR_INV in data[i]:
+			if hash_retries[data[i][0]][1] < INVALID_IDNENTIFIER_RETRIES:
+				hash_retries[data[i][0]][1] += 1
 				error = True
-			# else:
-			# 	delete ticker from DB
-		if ERR_REF in data_slice:
-			if hash_retries[i][2] < REFRESH_RETRIES:
-				hash_retries[i][2] += 1
+				print("Error in " + data[i][0] + " [ERR_INV] => " + str(hash_retries[data[i][0]]))
+			else:
+				tickers_to_delete.append(data[i][0])
+		if ERR_REF in data[i]:
+			if hash_retries[data[i][0]][2] < REFRESH_RETRIES:
+				hash_retries[data[i][0]][2] += 1
 				error = True
+				print("Error in " + data[i][0] + " [ERR_REF] => " + str(hash_retries[data[i][0]]))
 			# else:
 			# 	reboot
-		if error:
-			tmp = tickers.pop(i)
-
-
-def write_remaining_tickers(start, end, inc, ex):
-	tmp = start
-	while start < end:
-		tmp += inc
-		if tmp > end:
-			tmp = end
-		print("Writing(" + str(end) + "): [" + str(start) + ":" + str(tmp) + "] -> ")# + str(tickers[start:inc]))
-		ex.write_col("A4", tickers[start:tmp])
-		time.sleep(100)
-		start = tmp
+		if error and (data[i][0] not in retrial_tickers):
+			retrial_tickers.append(data[i][0])
+		elif (not error) and (data[i][0] in retrial_tickers):
+			retrial_tickers.remove(data[i][0])

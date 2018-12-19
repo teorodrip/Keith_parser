@@ -60,10 +60,7 @@ class excel:
 	def get_range(self, data_ran):
 		if self.sheet != None:
 			try:
-				data = []
-				for i in data_ran:
-					data.append(i.raw_value)
-				return (data)
+				return (data_ran.value)
 			except ValueError:
 				print(ValueError)
 		else:

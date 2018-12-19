@@ -1,0 +1,6 @@
+'#CIQINACTIVE'
+'(Invalid Identifier)'
+'NA'
+'NM'
+''
+'#REFRESH'
