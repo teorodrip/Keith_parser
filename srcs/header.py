@@ -2,13 +2,12 @@ import xlwings as xw
 import threading
 from excel import excel
 from class_sql_db import ClassSqlDb
-from xml.etree.ElementInclude import include
 import time
 
 # MACROS
 ##########################################################################################
 
-N_THREADS = 8
+N_THREADS = 1
 FILE_PATH = r"C:\Users\stagiaire3\Desktop\workspace\data_scrapping\Excel_scrapper\Keith_parser\Croissance_Marges_100.xlsb"
 
 # postgres parameters
@@ -59,8 +58,6 @@ threads = []
 # rebooted and if invalid_identifier_retries reaches his max the ticker will be removed from DB
 tickers = []
 hash_retries = {}
-tickers_ok = 0
-tickers_delete = 0
 ObjDB = ClassSqlDb(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
 
 # FUNCTIONS
@@ -109,4 +106,3 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 			if data[i][0] in retrial_tickers:
 				retrial_tickers.remove(data[i][0])
 			final_data.append(data[i])
-			print(data[i])

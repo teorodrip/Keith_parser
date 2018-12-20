@@ -1,6 +1,5 @@
 import xlwings as xw
 import sys
-from win32con import CB_GETITEMHEIGHT
 
 class excel:
 	app = None

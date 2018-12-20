@@ -26,8 +26,6 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 		parse_data(data, retrial_tickers, tickers_to_delete, final_data)
 		start = tmp
 		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]\n===========================" % (index, tmp - (index * tick_div) - len(retrial_tickers) - len(tickers_to_delete), end - (index * tick_div), len(retrial_tickers), end - (index * tick_div), len(tickers_to_delete), end - (index * tick_div)))
-	tickers_ok += end - (index * tick_div) - len(tickers_to_delete)
-	tickers_delete += len(tickers_to_delete)
 
 def init_threads(n_threads=0, daem=False):
 	for i in range(n_threads):
@@ -52,8 +50,10 @@ def init_threads(n_threads=0, daem=False):
 	print("Total tickers processed well: %d\nTotal tickers to delete: %d" % (tickers_ok, tickers_delete))
 
 if __name__ == '__main__':
+	start_time = time.time()
 	tickers = get_tickers()
 	print("Got %d tickers." % len(tickers))
 	for ticker in tickers:
 		hash_retries.update({ticker: [0, 0, 0]})
 	init_threads(N_THREADS, daem=False)
+	print("Total time: " + str(time.time() - start_time))
