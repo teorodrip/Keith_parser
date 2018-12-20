@@ -7,8 +7,9 @@ import time
 # MACROS
 ##########################################################################################
 
-N_THREADS = 1
-FILE_PATH = r"C:\Users\stagiaire3\Desktop\workspace\data_scrapping\Excel_scrapper\Keith_parser\Croissance_Marges_100.xlsb"
+N_THREADS = 4
+FILE_PATH = r"C:\Users\unchartech\Desktop\Croissance_Marges_100.xlsb"
+NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notification.log"
 
 # postgres parameters
 DB_NAME = 'infrastructure'
@@ -74,7 +75,15 @@ def get_tickers(remainings=False):
 		return (results)
 	except ValueError:
 		print(ValueError)
-        
+
+def write_notification_file(f):
+	try:
+		file = open(NOTIFICATION_FILE_PATH, "w")
+		file.write(f)
+		file.close()
+	except ValueError:
+		print(ValueError)
+
 def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 	#do it with bitfields in n time instead of 3n
 	for i in range(len(data)):
@@ -84,8 +93,10 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 				hash_retries[data[i][0]][0] += 1
 				error = True
 				print("Error in " + data[i][0] + " [ERR_CIQ] => " + str(hash_retries[data[i][0]]))
-			# else:
-			# 	reboot
+			else:
+				write_notification_file(final_data)
+				print("Going to sleep, waiting to reboot")
+				time.sleep(100)
 		if ERR_INV in data[i]:
 			if hash_retries[data[i][0]][1] < INVALID_IDNENTIFIER_RETRIES:
 				hash_retries[data[i][0]][1] += 1
@@ -98,8 +109,10 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 				hash_retries[data[i][0]][2] += 1
 				error = True
 				print("Error in " + data[i][0] + " [ERR_REF] => " + str(hash_retries[data[i][0]]))
-			# else:
-			# 	reboot
+			else:
+				write_notification_file(final_data)
+				print("Going to sleep, waiting to reboot")
+				time.sleep(100)
 		if error and (data[i][0] not in retrial_tickers):
 			retrial_tickers.append(data[i][0])
 		elif (not error):

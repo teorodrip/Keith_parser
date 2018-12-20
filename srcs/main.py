@@ -47,13 +47,13 @@ def init_threads(n_threads=0, daem=False):
 			threads[i].join()
 		except ValueError:
 			print(ValueError)
-	print("Total tickers processed well: %d\nTotal tickers to delete: %d" % (tickers_ok, tickers_delete))
 
 if __name__ == '__main__':
-	start_time = time.time()
-	tickers = get_tickers()
-	print("Got %d tickers." % len(tickers))
-	for ticker in tickers:
-		hash_retries.update({ticker: [0, 0, 0]})
-	init_threads(N_THREADS, daem=False)
-	print("Total time: " + str(time.time() - start_time))
+	write_notification_file("aaaaaaaaaaaaaaaaa")
+	# start_time = time.time()
+	# tickers = get_tickers()
+	# print("Got %d tickers." % len(tickers))
+	# for ticker in tickers:
+	# 	hash_retries.update({ticker: [0, 0, 0]})
+	# init_threads(N_THREADS, daem=False)
+	# print("Total time: " + str(time.time() - start_time))
