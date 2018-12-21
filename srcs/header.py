@@ -10,8 +10,10 @@ import ast
 
 N_THREADS = 1
 FILE_PATH = r"C:\Users\unchartech\Desktop\Croissance_Marges_100.xlsb"
-NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notification.log"
+NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notifications\reboot.log"
 THREAD_FILE_PATH = r"Z:\keith_parser\notifications"
+START_FILE_PATH = r"Z:\keith_parser\notifications\start.log"
+END_FILE_PATH = r"Z:\keith_parser\notifications\end.log"
 
 # postgres parameters
 DB_NAME = 'infrastructure'
@@ -61,10 +63,15 @@ threads = []
 # rebooted and if invalid_identifier_retries reaches his max the ticker will be removed from DB
 tickers = []
 hash_retries = {}
+reboot_flag = False
 ObjDB = ClassSqlDb(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
 
 # FUNCTIONS
 ##########################################################################################
+
+def print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end):
+		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]\n===========================" % (index, tmp - (index * tick_div) - len(retrial_tickers) - len(tickers_to_delete), end - (index * tick_div), len(retrial_tickers), end - (index * tick_div), len(tickers_to_delete), end - (index * tick_div)))
+
 
 def get_tickers(remainings=False):
 	if remainings:
@@ -85,13 +92,13 @@ def read_thread_file(file_name):
 		start = int(thread_file.readline())
 		retrial_tickers = ast.literal_eval(thread_file.read())
 		print("Start: " + str(start))
-		for s in retrial_tickers:
-			print(s)
+		print("Tickers:" + str(retrial_tickers))
 		thread_file.close()
+		return (start, retrial_tickers)
 	except FileNotFoundError:
-		pass
+		return (None, None)
 	except ValueError:
-		print(ValueError)
+		return (None, None)
 
 def write_reboot_file(f):
 	try:
@@ -109,6 +116,30 @@ def write_thread_file(file_name, start, retrial_tickers):
 	except ValueError:
 		print(ValueError)
 
+def reboot_vm():
+	global reboot_flag
+
+	try:
+		reboot_flag = True
+	except:
+		pass
+
+def write_start_file():
+	try:
+		file = open(START_FILE_PATH, "w")
+		file.write("s")
+		file.close()
+	except ValueError:
+		print(ValueError)
+
+def write_end_file():
+	try:
+		file = open(END_FILE_PATH, "w")
+		file.write("e")
+		file.close()
+	except ValueError:
+		print(ValueError)
+
 def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 	#do it with bitfields in n time instead of 3n
 	for i in range(len(data)):
@@ -119,9 +150,7 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 				error = True
 				print("Error in " + data[i][0] + " [ERR_CIQ] => " + str(hash_retries[data[i][0]]))
 			else:
-				write_notification_file(final_data)
-				print("Going to sleep, waiting to reboot")
-				time.sleep(100)
+				reboot_vm()
 		if ERR_INV in data[i]:
 			if hash_retries[data[i][0]][1] < INVALID_IDNENTIFIER_RETRIES:
 				hash_retries[data[i][0]][1] += 1
@@ -135,9 +164,7 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 				error = True
 				print("Error in " + data[i][0] + " [ERR_REF] => " + str(hash_retries[data[i][0]]))
 			else:
-				write_notification_file(final_data)
-				print("Going to sleep, waiting to reboot")
-				time.sleep(100)
+				reboot_vm()
 		if error and (data[i][0] not in retrial_tickers):
 			retrial_tickers.append(data[i][0])
 		elif (not error):
