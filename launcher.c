@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2018/12/20 17:48:49 by Mateo                                    */
-/*   Updated: 2018/12/21 16:15:38 by Mateo                                    */
+/*   Updated: 2018/12/21 16:22:20 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,7 @@ static void manage_event(struct inotify_event *i, pthread_t *time_watcher)
 		  system(END_COMMAND);
 		  system(POWEROFF_COMMAND);
 		  printf("Data processed successfully\n");
+		  exit(0);
 		}
 	}
 }
