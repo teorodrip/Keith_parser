@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2018/12/20 17:48:49 by Mateo                                    */
-/*   Updated: 2018/12/21 16:22:20 by Mateo                                    */
+/*   Updated: 2018/12/21 16:29:55 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,11 @@ static void *time_out(void *arg)
   system(REBOOT_COMMAND);
   printf("Some problem booting the machine, proceding to reboot\n");
   pthread_mutex_lock(&mutex);
-  pthread_create((pthread_t *)arg, NULL, time_out, (pthread_t *)arg);
+  if (pthread_create((pthread_t *)arg, NULL, time_out, (pthread_t *)arg))
+	{
+	  printf("Fatal: Can not create thread\n");
+	  exit(2);
+	}
   pthread_mutex_unlock(&mutex);
   return (NULL);
 }
@@ -70,7 +74,11 @@ static void manage_event(struct inotify_event *i, pthread_t *time_watcher)
 		{
 		  printf("Rebooting VM\n");
 		  system(REBOOT_COMMAND);
-		  pthread_create(time_watcher, NULL, time_out, time_watcher);
+		  if (pthread_create(time_watcher, NULL, time_out, time_watcher))
+			{
+			  printf("Fatal: Can not create thread\n");
+			  exit(2);
+			}
 		}
 	  else if (!strcmp(file_name, START_FILE_NAME))
 		{
@@ -99,7 +107,11 @@ int main()
   struct inotify_event	*event;
 
   system(START_COMMAND);
-  pthread_create(&time_watcher, NULL, time_out, &time_watcher);
+  if (pthread_create(&time_watcher, NULL, time_out, &time_watcher))
+	{
+	  printf("Fatal: Can not create thread\n");
+	  exit(2);
+	}
   if ((fd_notify = inotify_init()) == -1)
   	{
   	  printf("Can not init inotify");
