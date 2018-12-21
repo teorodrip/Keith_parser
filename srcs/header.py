@@ -3,13 +3,15 @@ import threading
 from excel import excel
 from class_sql_db import ClassSqlDb
 import time
+import ast
 
 # MACROS
 ##########################################################################################
 
-N_THREADS = 4
+N_THREADS = 1
 FILE_PATH = r"C:\Users\unchartech\Desktop\Croissance_Marges_100.xlsb"
 NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notification.log"
+THREAD_FILE_PATH = r"Z:\keith_parser\notifications"
 
 # postgres parameters
 DB_NAME = 'infrastructure'
@@ -75,12 +77,35 @@ def get_tickers(remainings=False):
 		return (results)
 	except ValueError:
 		print(ValueError)
+		
 
-def write_notification_file(f):
+def read_thread_file(file_name):
+	try:
+		thread_file = open(file_name, "r")
+		start = int(thread_file.readline())
+		retrial_tickers = ast.literal_eval(thread_file.read())
+		print("Start: " + str(start))
+		for s in retrial_tickers:
+			print(s)
+		thread_file.close()
+	except FileNotFoundError:
+		pass
+	except ValueError:
+		print(ValueError)
+
+def write_reboot_file(f):
 	try:
 		file = open(NOTIFICATION_FILE_PATH, "w")
 		file.write(f)
 		file.close()
+	except ValueError:
+		print(ValueError)
+
+def write_thread_file(file_name, start, retrial_tickers):
+	try:
+		thread_file = open(file_name, "w")
+		thread_file.write(str(start) + "\n" + str(retrial_tickers))
+		thread_file.close()
 	except ValueError:
 		print(ValueError)
 
