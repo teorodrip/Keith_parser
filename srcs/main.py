@@ -32,12 +32,12 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 		data = ex.get_range(ex.sheet.range((4, 1), (SHEET_ROWS, SHEET_COLS)))
 		parse_data(data, retrial_tickers, tickers_to_delete, final_data)
 		final_data.clear()#upload data here
-		print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end)
 		if reboot_flag[0]:
 			print("Finishing thread %d for reboot" % (index))
 			time.sleep(3)
 			write_thread_file(thread_file, start, retrial_tickers)
 			return
+		print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end)
 		start = tmp
 
 def init_threads(n_threads=0, daem=False):

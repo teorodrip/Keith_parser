@@ -141,8 +141,6 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 	error_len = len(ERROR_ARR)
 	retrial_tickers_copy = retrial_tickers.copy()
 
-	data[0][1] = ERR_CIQ
-
 	for i in range(data_rows):
 		data_cols = len(data[i])
 		error = False
