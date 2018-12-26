@@ -40,7 +40,7 @@ SHEET_ROWS = 103
 DATA_COLS = 185
 DATA_ROWS = 100
 DATA_BEGIN = "A4"
-CIQINACTIVE_RTETRIES = 3
+CIQINACTIVE_RTETRIES = 0
 INVALID_IDNENTIFIER_RETRIES = 2
 REFRESH_RETRIES = 3
 ERR_CIQ = '#CIQINACTIVE'
@@ -66,7 +66,7 @@ threads = []
 tickers = []
 hash_retries = {}
 lock = threading.Lock()
-reboot_flag = False
+reboot_flag = [False]
 ObjDB = ClassSqlDb(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
 
 # FUNCTIONS
@@ -74,7 +74,6 @@ ObjDB = ClassSqlDb(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
 
 def print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end):
 		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]\n===========================" % (index, tmp - (index * tick_div) - len(retrial_tickers) - len(tickers_to_delete), end - (index * tick_div), len(retrial_tickers), end - (index * tick_div), len(tickers_to_delete), end - (index * tick_div)))
-		print("Retrial tickers: %s" % (str(retrial_tickers)))
 
 
 def get_tickers(remainings=False):
@@ -142,18 +141,22 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 	error_len = len(ERROR_ARR)
 	retrial_tickers_copy = retrial_tickers.copy()
 
+	data[0][1] = ERR_CIQ
+
 	for i in range(data_rows):
 		data_cols = len(data[i])
 		error = False
+		delete = False
 		for j in range(1, data_cols):
 			for k in range(error_len):
 				if data[i][j] == ERROR_ARR[k]:
 					if hash_retries[data[i][0]][k] >= RETRY_ARR[k]:
 						if ERROR_ARR[k] == ERR_INV:
 							tickers_to_delete.append(data[i][0])
+							delete = True
 						else:
-							lock.aquire()
-							reboot_flag = True
+							lock.acquire()
+							reboot_flag[0] = True
 							lock.release()
 							print("Max %s retries reached in %s, rebooting the machine" % (ERROR_ARR[k], hash_retries[data[i][0]][k]))
 							tickers_to_delete.clear()
@@ -163,7 +166,7 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 						print("Error in %s {%s} => %s" % (data[i][0], ERROR_ARR[k], str(hash_retries[data[i][0]])))
 						error = True
 					break
-			if error:
+			if error or delete:
 				break
 		if error and (data[i][0] not in retrial_tickers_copy):
 			retrial_tickers_copy.append(data[i][0])

@@ -23,7 +23,7 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 	tickers_to_delete = []
 	final_data = []
 	while (start < end) or (len(retrial_tickers) != 0):
-		print("Reboot: " + str(reboot_flag))
+		print("Reboot: " + str(reboot_flag[0]))
 		tmp += (DATA_ROWS - len(retrial_tickers))
 		if tmp > end:
 			tmp = end
@@ -33,8 +33,9 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 		parse_data(data, retrial_tickers, tickers_to_delete, final_data)
 		final_data.clear()#upload data here
 		print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end)
-		if reboot_flag:
+		if reboot_flag[0]:
 			print("Finishing thread %d for reboot" % (index))
+			time.sleep(3)
 			write_thread_file(thread_file, start, retrial_tickers)
 			return
 		start = tmp
@@ -71,7 +72,7 @@ if __name__ == '__main__':
 		hash_retries.update({ticker: [0, 0, 0]})
 	init_threads(N_THREADS, daem=False)
 	print("Total time: " + str(time.time() - start_time))
-	if reboot_flag:
+	if reboot_flag[0]:
 		write_reboot_file("r")
 	else:
 		write_end_file()
