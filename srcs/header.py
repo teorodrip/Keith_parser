@@ -48,6 +48,8 @@ ERR_INV = '(Invalid Identifier)'
 ERR_NA = 'NA'
 ERR_NM = 'NM'
 ERR_REF = '#REFRESH'
+ERROR_ARR = [ERR_CIQ, ERR_INV, ERR_REF]
+RETRY_ARR = [CIQINACTIVE_RTETRIES, INVALID_IDNENTIFIER_RETRIES, REFRESH_RETRIES]
 
 
 # GLOBAL
@@ -63,6 +65,7 @@ threads = []
 # rebooted and if invalid_identifier_retries reaches his max the ticker will be removed from DB
 tickers = []
 hash_retries = {}
+lock = threading.Lock()
 reboot_flag = False
 ObjDB = ClassSqlDb(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
 
@@ -71,6 +74,7 @@ ObjDB = ClassSqlDb(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
 
 def print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end):
 		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]\n===========================" % (index, tmp - (index * tick_div) - len(retrial_tickers) - len(tickers_to_delete), end - (index * tick_div), len(retrial_tickers), end - (index * tick_div), len(tickers_to_delete), end - (index * tick_div)))
+		print("Retrial tickers: %s" % (str(retrial_tickers)))
 
 
 def get_tickers(remainings=False):
@@ -116,14 +120,6 @@ def write_thread_file(file_name, start, retrial_tickers):
 	except ValueError:
 		print(ValueError)
 
-def reboot_vm():
-	global reboot_flag
-
-	try:
-		reboot_flag = True
-	except:
-		pass
-
 def write_start_file():
 	try:
 		file = open(START_FILE_PATH, "w")
@@ -141,33 +137,71 @@ def write_end_file():
 		print(ValueError)
 
 def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
-	#do it with bitfields in n time instead of 3n
-	for i in range(len(data)):
+	global reboot_flag
+	data_rows = len(data)
+	error_len = len(ERROR_ARR)
+	retrial_tickers_copy = retrial_tickers.copy()
+
+	for i in range(data_rows):
+		data_cols = len(data[i])
 		error = False
-		if ERR_CIQ in data[i]:
-			if hash_retries[data[i][0]][0] < CIQINACTIVE_RTETRIES:
-				hash_retries[data[i][0]][0] += 1
-				error = True
-				print("Error in " + data[i][0] + " [ERR_CIQ] => " + str(hash_retries[data[i][0]]))
-			else:
-				reboot_vm()
-		if ERR_INV in data[i]:
-			if hash_retries[data[i][0]][1] < INVALID_IDNENTIFIER_RETRIES:
-				hash_retries[data[i][0]][1] += 1
-				error = True
-				print("Error in " + data[i][0] + " [ERR_INV] => " + str(hash_retries[data[i][0]]))
-			else:
-				tickers_to_delete.append(data[i][0])
-		if ERR_REF in data[i]:
-			if hash_retries[data[i][0]][2] < REFRESH_RETRIES:
-				hash_retries[data[i][0]][2] += 1
-				error = True
-				print("Error in " + data[i][0] + " [ERR_REF] => " + str(hash_retries[data[i][0]]))
-			else:
-				reboot_vm()
-		if error and (data[i][0] not in retrial_tickers):
-			retrial_tickers.append(data[i][0])
+		for j in range(1, data_cols):
+			for k in range(error_len):
+				if data[i][j] == ERROR_ARR[k]:
+					if hash_retries[data[i][0]][k] >= RETRY_ARR[k]:
+						if ERROR_ARR[k] == ERR_INV:
+							tickers_to_delete.append(data[i][0])
+						else:
+							lock.aquire()
+							reboot_flag = True
+							lock.release()
+							print("Max %s retries reached in %s, rebooting the machine" % (ERROR_ARR[k], hash_retries[data[i][0]][k]))
+							tickers_to_delete.clear()
+							return
+					else:
+						hash_retries[data[i][0]][k] += 1
+						print("Error in %s {%s} => %s" % (data[i][0], ERROR_ARR[k], str(hash_retries[data[i][0]])))
+						error = True
+					break
+			if error:
+				break
+		if error and (data[i][0] not in retrial_tickers_copy):
+			retrial_tickers_copy.append(data[i][0])
 		elif (not error):
-			if data[i][0] in retrial_tickers:
-				retrial_tickers.remove(data[i][0])
+			if data[i][0] in retrial_tickers_copy:
+				retrial_tickers_copy.remove(data[i][0])
 			final_data.append(data[i])
+	retrial_tickers[:] = retrial_tickers_copy
+
+
+
+		# if ERR_CIQ in data[i] or True:
+		# 	if hash_retries[data[i][0]][0] < CIQINACTIVE_RTETRIES and False:
+		# 		hash_retries[data[i][0]][0] += 1
+		# 		error = True
+		# 		print("Error in " + data[i][0] + " [ERR_CIQ] => " + str(hash_retries[data[i][0]]))
+		# 	else:
+		# 		print("Rebooting VM")
+		# 		lock.aquire()
+		# 		reboot_flag = True
+		# 		lock.release()
+		# if ERR_INV in data[i]:
+		# 	if hash_retries[data[i][0]][1] < INVALID_IDNENTIFIER_RETRIES:
+		# 		hash_retries[data[i][0]][1] += 1
+		# 		error = True
+		# 		print("Error in " + data[i][0] + " [ERR_INV] => " + str(hash_retries[data[i][0]]))
+		# 	else:
+		# 		tickers_to_delete.append(data[i][0])
+		# if ERR_REF in data[i]:
+		# 	if hash_retries[data[i][0]][2] < REFRESH_RETRIES:
+		# 		hash_retries[data[i][0]][2] += 1
+		# 		error = True
+		# 		print("Error in " + data[i][0] + " [ERR_REF] => " + str(hash_retries[data[i][0]]))
+		# 	else:
+		# 		reboot_vm()
+		# if error and (data[i][0] not in retrial_tickers):
+		# 	retrial_tickers.append(data[i][0])
+		# elif (not error):
+		# 	if data[i][0] in retrial_tickers:
+		# 		retrial_tickers.remove(data[i][0])
+		# 	final_data.append(data[i])
