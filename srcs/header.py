@@ -142,6 +142,8 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 	retrial_tickers_copy = retrial_tickers.copy()
 
 	for i in range(data_rows):
+		if (data[i][0] == '') or (data[i][0] is None):
+			break
 		data_cols = len(data[i])
 		error = False
 		delete = False

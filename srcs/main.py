@@ -27,7 +27,7 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 		tmp += (DATA_ROWS - len(retrial_tickers))
 		if tmp > end:
 			tmp = end
-		ticker_col = retrial_tickers + tickers[start:tmp]
+		ticker_col = retrial_tickers + tickers[start:tmp] + ([''] * (DATA_ROWS - len(retrial_tickers) - (tmp - start)))
 		ex.write_col(DATA_BEGIN, ticker_col)
 		data = ex.get_range(ex.sheet.range((4, 1), (SHEET_ROWS, SHEET_COLS)))
 		parse_data(data, retrial_tickers, tickers_to_delete, final_data)
@@ -65,13 +65,11 @@ if __name__ == '__main__':
 	global reboot_flag
 
 	write_start_file()
-	start_time = time.time()
 	tickers = get_tickers()
 	print("Got %d tickers." % len(tickers))
 	for ticker in tickers:
 		hash_retries.update({ticker: [0, 0, 0]})
 	init_threads(N_THREADS, daem=False)
-	print("Total time: " + str(time.time() - start_time))
 	if reboot_flag[0]:
 		write_reboot_file("r")
 	else:
