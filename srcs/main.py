@@ -34,7 +34,6 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 		final_data.clear()#upload data here
 		if reboot_flag[0]:
 			print("Finishing thread %d for reboot" % (index))
-			time.sleep(3)
 			write_thread_file(thread_file, start, retrial_tickers)
 			return
 		print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end)

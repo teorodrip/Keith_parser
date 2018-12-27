@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2018/12/20 17:48:49 by Mateo                                    */
-/*   Updated: 2018/12/21 16:29:55 by Mateo                                    */
+/*   Updated: 2018/12/27 13:33:33 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,22 +28,26 @@
 #define POWEROFF_COMMAND "VBoxManage controlvm " VM_NAME " poweroff soft"
 #define START_COMMAND "VBoxManage startvm " VM_NAME
 #define END_COMMAND "rm -f " FILE_PATH "/*"
+#define TIME_OUT 90
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+unsigned char start_success;
 
 static void *time_out(void *arg)
 {
-  (void)arg;
-  sleep(60);
-  system(REBOOT_COMMAND);
-  printf("Some problem booting the machine, proceding to reboot\n");
-  pthread_mutex_lock(&mutex);
-  if (pthread_create((pthread_t *)arg, NULL, time_out, (pthread_t *)arg))
-	{
-	  printf("Fatal: Can not create thread\n");
-	  exit(2);
-	}
-  pthread_mutex_unlock(&mutex);
+  sleep(TIME_OUT);
+	if (!start_success)
+		{
+			system(REBOOT_COMMAND);
+			printf("Some problem booting the machine, proceding to reboot\n");
+			pthread_mutex_lock(&mutex);
+			if (pthread_create((pthread_t *)arg, NULL, time_out, (pthread_t *)arg))
+				{
+					printf("Fatal: Can not create thread\n");
+					exit(2);
+				}
+			pthread_mutex_unlock(&mutex);
+		}
   return (NULL);
 }
 
@@ -67,34 +71,34 @@ static void manage_event(struct inotify_event *i, pthread_t *time_watcher)
   if (i->mask & IN_Q_OVERFLOW)    printf("IN_Q_OVERFLOW ");
   printf("\n");
   if (i->len > 0)
-	{
-	  file_name = i->name;
-	  printf("        name = %s\n", file_name);
-	  if (!strcmp(file_name, REBOOT_FILE_NAME))
 		{
-		  printf("Rebooting VM\n");
-		  system(REBOOT_COMMAND);
-		  if (pthread_create(time_watcher, NULL, time_out, time_watcher))
-			{
-			  printf("Fatal: Can not create thread\n");
-			  exit(2);
-			}
+			file_name = i->name;
+			printf("        name = %s\n", file_name);
+			if (!strcmp(file_name, REBOOT_FILE_NAME))
+				{
+					printf("Rebooting VM\n");
+					system(REBOOT_COMMAND);
+					if (pthread_create(time_watcher, NULL, time_out, time_watcher))
+						{
+							printf("Fatal: Can not create thread\n");
+							exit(2);
+						}
+				}
+			else if (!strcmp(file_name, START_FILE_NAME))
+				{
+					pthread_mutex_lock(&mutex);
+					start_success = 1;
+					pthread_mutex_unlock(&mutex);
+					printf("Machine started successfully\n");
+				}
+			else if (!strcmp(file_name, END_FILE_NAME))
+				{
+					system(END_COMMAND);
+					system(POWEROFF_COMMAND);
+					printf("Data processed successfully\n");
+					exit(0);
+				}
 		}
-	  else if (!strcmp(file_name, START_FILE_NAME))
-		{
-		  pthread_mutex_lock(&mutex);
-		  pthread_cancel(*time_watcher);
-		  pthread_mutex_unlock(&mutex);
-		  printf("Machine started successfully\n");
-		}
-	  else if (!strcmp(file_name, END_FILE_NAME))
-		{
-		  system(END_COMMAND);
-		  system(POWEROFF_COMMAND);
-		  printf("Data processed successfully\n");
-		  exit(0);
-		}
-	}
 }
 
 int main()
@@ -106,12 +110,13 @@ int main()
   pthread_t time_watcher;
   struct inotify_event	*event;
 
+	start_success = 0;
   system(START_COMMAND);
   if (pthread_create(&time_watcher, NULL, time_out, &time_watcher))
-	{
-	  printf("Fatal: Can not create thread\n");
-	  exit(2);
-	}
+		{
+			printf("Fatal: Can not create thread\n");
+			exit(2);
+		}
   if ((fd_notify = inotify_init()) == -1)
   	{
   	  printf("Can not init inotify");
@@ -125,16 +130,16 @@ int main()
   while (1)
   	{
   	  if ((readed = read(fd_notify, buff, BUF_LEN)) < 0)
-  		{
-  		  printf("Error reading");
-  		  exit(2);
-  		}
+				{
+					printf("Error reading");
+					exit(2);
+				}
   	  for (buff_tmp = buff; buff_tmp < buff + readed; )
-  		{
-  		  event = (struct inotify_event *)buff_tmp;
-  		  manage_event(event, &time_watcher);
-  		  buff_tmp += sizeof(struct inotify_event) + event->len;
-  		}
+				{
+					event = (struct inotify_event *)buff_tmp;
+					manage_event(event, &time_watcher);
+					buff_tmp += sizeof(struct inotify_event) + event->len;
+				}
   	}
   return (0);
 }
