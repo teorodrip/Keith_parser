@@ -10,7 +10,7 @@ import os
 # MACROS
 ##########################################################################################
 
-N_THREADS = 1
+N_THREADS = 2
 APP_VISIBLE = True
 FILE_PATH = r"Z:\keith_parser\resources\Croissance_Marges_100.xlsb"
 NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notifications\reboot.log"
@@ -150,7 +150,9 @@ def get_ticker_batch(batch_size):
 		try:
 			col.append(tickers.get(block=False))
 		except:
-			return (col)
+			break
+	while len(col) < batch_size:
+		col.append("")
 	return (col)
 
 def parse_data (data, tickers_to_delete, final_data):
@@ -178,6 +180,7 @@ def parse_data (data, tickers_to_delete, final_data):
 							lock.release()
 							print("Max %s retries reached in %s, rebooting the machine" % (ERROR_ARR[k], hash_retries[data[i][0]][k]))
 							tickers_to_delete.clear()
+							tickers.put(data[i][0])
 							return
 					else:
 						hash_retries[data[i][0]][k] += 1
