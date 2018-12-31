@@ -4,15 +4,17 @@ from excel import excel
 from class_sql_db import ClassSqlDb
 import time
 import ast
+import queue
+import os
 
 # MACROS
 ##########################################################################################
 
-N_THREADS = 2
+N_THREADS = 1
 APP_VISIBLE = True
 FILE_PATH = r"Z:\keith_parser\resources\Croissance_Marges_100.xlsb"
 NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notifications\reboot.log"
-THREAD_FILE_PATH = r"Z:\keith_parser\notifications"
+TICKERS_FILE_PATH = r"Z:\keith_parser\notifications\tickers.log"
 START_FILE_PATH = r"Z:\keith_parser\notifications\start.log"
 END_FILE_PATH = r"Z:\keith_parser\notifications\end.log"
 
@@ -64,7 +66,7 @@ threads = []
 # ["TICKER_NAME", CIQINACTIVE_retries, invalid_identifier_retries, REFRESH_retries]
 # if CIQINACTIVE_retries or REFRESH_retries reaches they max retries the machine will be
 # rebooted and if invalid_identifier_retries reaches his max the ticker will be removed from DB
-tickers = []
+tickers = queue.Queue()
 hash_retries = {}
 lock = threading.Lock()
 reboot_flag = [False]
@@ -73,50 +75,54 @@ ObjDB = ClassSqlDb(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
 # FUNCTIONS
 ##########################################################################################
 
-def print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end):
-		print("===========================\n Thread %d\n===========================\nOK => [%d/%d]\nRetry => [%d/%d]\nDelete => [%d/%d]\n===========================" % (index, tmp - (index * tick_div) - len(retrial_tickers) - len(tickers_to_delete), end - (index * tick_div), len(retrial_tickers), end - (index * tick_div), len(tickers_to_delete), end - (index * tick_div)))
+def print_thread_info(index, remaining):
+		print("===========================\n Thread %d\n===========================\nRemaining: %d\n===========================" % (index, remaining))
 
 
 def get_tickers(remainings=False):
-	if remainings:
-		request = SQL_REM_REQ
+	global hash_retries
+	global tickers
+
+	if os.path.exists(TICKERS_FILE_PATH) and os.path.getsize(TICKERS_FILE_PATH) > 0:
+		try:
+			tickers_file = open(TICKERS_FILE_PATH, "r")
+			#python treats the file iterator as line by line by default
+			for line in tickers_file:
+				tickers.put(line)
+				hash_retries.update({line: [0, 0, 0]})
+		except:
+			print("Error reading tickers file")
 	else:
-		request = SQL_ALL_REQ
-	try:
-		results = ObjDB.method_select(str_advanced_request=request)
-		results = [row[0] for row in results]
-		return (results)
-	except ValueError:
-		print(ValueError)
-		
+		if remainings:
+			request = SQL_REM_REQ
+		else:
+			request = SQL_ALL_REQ
+		try:
+			results = ObjDB.method_select(str_advanced_request=request)
+			for row in results:
+				tickers.put(row[0])
+				hash_retries.update({row[0]: [0, 0, 0]})
+		except ValueError:
+			print(ValueError)
 
-def read_thread_file(file_name):
-	try:
-		thread_file = open(file_name, "r")
-		start = int(thread_file.readline())
-		retrial_tickers = ast.literal_eval(thread_file.read())
-		print("Start: " + str(start))
-		print("Tickers:" + str(retrial_tickers))
-		thread_file.close()
-		return (start, retrial_tickers)
-	except FileNotFoundError:
-		return (None, None)
-	except ValueError:
-		return (None, None)
-
-def write_reboot_file(f):
+def write_reboot_file():
 	try:
 		file = open(NOTIFICATION_FILE_PATH, "w")
-		file.write(f)
+		file.write("r")
 		file.close()
 	except ValueError:
 		print(ValueError)
 
-def write_thread_file(file_name, start, retrial_tickers):
+def write_tickers_file():
+	global tickers
+
 	try:
-		thread_file = open(file_name, "w")
-		thread_file.write(str(start) + "\n" + str(retrial_tickers))
-		thread_file.close()
+		ticker_file = open(TICKERS_FILE_PATH, "a")
+		ticker_file.seek(0)
+		ticker_file.truncate()
+		while not tickers.empty():
+			ticker_file.write("%s\n" % (tickers.get(block=False)))
+		ticker_file.close()
 	except ValueError:
 		print(ValueError)
 
@@ -136,11 +142,22 @@ def write_end_file():
 	except ValueError:
 		print(ValueError)
 
-def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
+def get_ticker_batch(batch_size):
+	global tickers
+	col = []
+
+	for _ in range(batch_size):
+		try:
+			col.append(tickers.get(block=False))
+		except:
+			return (col)
+	return (col)
+
+def parse_data (data, tickers_to_delete, final_data):
 	global reboot_flag
+	global tickers
 	data_rows = len(data)
 	error_len = len(ERROR_ARR)
-	retrial_tickers_copy = retrial_tickers.copy()
 
 	for i in range(data_rows):
 		if (data[i][0] == '') or (data[i][0] is None):
@@ -169,43 +186,7 @@ def parse_data (data, retrial_tickers, tickers_to_delete, final_data):
 					break
 			if error or delete:
 				break
-		if error and (data[i][0] not in retrial_tickers_copy):
-			retrial_tickers_copy.append(data[i][0])
-		elif (not error):
-			if data[i][0] in retrial_tickers_copy:
-				retrial_tickers_copy.remove(data[i][0])
+		if error:
+			tickers.put(data[i][0])
+		else:
 			final_data.append(data[i])
-	retrial_tickers[:] = retrial_tickers_copy
-
-
-
-		# if ERR_CIQ in data[i] or True:
-		# 	if hash_retries[data[i][0]][0] < CIQINACTIVE_RTETRIES and False:
-		# 		hash_retries[data[i][0]][0] += 1
-		# 		error = True
-		# 		print("Error in " + data[i][0] + " [ERR_CIQ] => " + str(hash_retries[data[i][0]]))
-		# 	else:
-		# 		print("Rebooting VM")
-		# 		lock.aquire()
-		# 		reboot_flag = True
-		# 		lock.release()
-		# if ERR_INV in data[i]:
-		# 	if hash_retries[data[i][0]][1] < INVALID_IDNENTIFIER_RETRIES:
-		# 		hash_retries[data[i][0]][1] += 1
-		# 		error = True
-		# 		print("Error in " + data[i][0] + " [ERR_INV] => " + str(hash_retries[data[i][0]]))
-		# 	else:
-		# 		tickers_to_delete.append(data[i][0])
-		# if ERR_REF in data[i]:
-		# 	if hash_retries[data[i][0]][2] < REFRESH_RETRIES:
-		# 		hash_retries[data[i][0]][2] += 1
-		# 		error = True
-		# 		print("Error in " + data[i][0] + " [ERR_REF] => " + str(hash_retries[data[i][0]]))
-		# 	else:
-		# 		reboot_vm()
-		# if error and (data[i][0] not in retrial_tickers):
-		# 	retrial_tickers.append(data[i][0])
-		# elif (not error):
-		# 	if data[i][0] in retrial_tickers:
-		# 		retrial_tickers.remove(data[i][0])
-		# 	final_data.append(data[i])

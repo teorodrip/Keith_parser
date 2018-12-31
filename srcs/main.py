@@ -2,41 +2,23 @@ from header import *
  
 def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 	global reboot_flag
+	global tickers
 	app = xw.apps[pid]
 	ex = excel(app, path, 0)
 	ex.del_book(0)
-	n_tickers = len(tickers)
-	tick_div =  n_tickers // n_threads
-	end  = tick_div * index + tick_div
-	thread_file = THREAD_FILE_PATH + "\\" + str(index) + ".log"
-
-	if index == (n_threads - 1):
-		end += (n_tickers % n_threads)
-
-	start, retrial_tickers = read_thread_file(thread_file)
-	if start == None or retrial_tickers == None:
-		print("First boot")
-		retrial_tickers = []
-		start = index * tick_div
-
-	tmp = start
 	tickers_to_delete = []
 	final_data = []
-	while (start < end) or (len(retrial_tickers) != 0):
-		tmp += (DATA_ROWS - len(retrial_tickers))
-		if tmp > end:
-			tmp = end
-		ticker_col = retrial_tickers + tickers[start:tmp] + ([''] * (DATA_ROWS - len(retrial_tickers) - (tmp - start)))
+
+	while not tickers.empty():
+		ticker_col = get_ticker_batch(DATA_ROWS)
 		ex.write_col(DATA_BEGIN, ticker_col)
 		data = ex.get_range(ex.sheet.range((4, 1), (SHEET_ROWS, SHEET_COLS)))
-		parse_data(data, retrial_tickers, tickers_to_delete, final_data)
+		parse_data(data, tickers_to_delete, final_data)
 		final_data.clear()#upload data here
 		if reboot_flag[0]:
 			print("Finishing thread %d for reboot" % (index))
-			write_thread_file(thread_file, start, retrial_tickers)
 			return
-		print_thread_info(index, tmp, tick_div, retrial_tickers, tickers_to_delete, end)
-		start = tmp
+		print_thread_info(index, tickers.qsize())
 
 def init_threads(n_threads=0, daem=False):
 	for i in range(n_threads):
@@ -61,14 +43,14 @@ def init_threads(n_threads=0, daem=False):
 
 if __name__ == '__main__':
 	global reboot_flag
+	global tickers
 
 	write_start_file()
-	tickers = get_tickers()
-	print("Got %d tickers." % len(tickers))
-	for ticker in tickers:
-		hash_retries.update({ticker: [0, 0, 0]})
+	get_tickers()
+	print("Got %d tickers." % tickers.qsize())
 	init_threads(N_THREADS, daem=False)
 	if reboot_flag[0]:
-		write_reboot_file("r")
+		write_tickers_file()
+		write_reboot_file()
 	else:
 		write_end_file()
