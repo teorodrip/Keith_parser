@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2018/12/20 17:48:49 by Mateo                                    */
-/*   Updated: 2018/12/27 13:33:33 by Mateo                                    */
+/*   Updated: 2018/12/28 19:48:12 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@
 #define VM_NAME "windows"
 #define REBOOT_COMMAND "VBoxManage controlvm " VM_NAME " reset soft"
 #define POWEROFF_COMMAND "VBoxManage controlvm " VM_NAME " poweroff soft"
-#define START_COMMAND "VBoxManage startvm " VM_NAME
+#define START_COMMAND "VBoxManage startvm " VM_NAME //" --type headless"
 #define END_COMMAND "rm -f " FILE_PATH "/*"
 #define TIME_OUT 90
 
@@ -46,6 +46,12 @@ static void *time_out(void *arg)
 					printf("Fatal: Can not create thread\n");
 					exit(2);
 				}
+			pthread_mutex_unlock(&mutex);
+		}
+	else
+		{
+			pthread_mutex_lock(&mutex);
+			start_success = 0;
 			pthread_mutex_unlock(&mutex);
 		}
   return (NULL);

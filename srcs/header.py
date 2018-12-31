@@ -8,8 +8,9 @@ import ast
 # MACROS
 ##########################################################################################
 
-N_THREADS = 1
-FILE_PATH = r"C:\Users\unchartech\Desktop\Croissance_Marges_100.xlsb"
+N_THREADS = 2
+APP_VISIBLE = True
+FILE_PATH = r"Z:\keith_parser\resources\Croissance_Marges_100.xlsb"
 NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notifications\reboot.log"
 THREAD_FILE_PATH = r"Z:\keith_parser\notifications"
 START_FILE_PATH = r"Z:\keith_parser\notifications\start.log"

@@ -23,7 +23,6 @@ def thread_main(path=FILE_PATH, pid=0, index=0, n_threads=0):
 	tickers_to_delete = []
 	final_data = []
 	while (start < end) or (len(retrial_tickers) != 0):
-		print("Reboot: " + str(reboot_flag[0]))
 		tmp += (DATA_ROWS - len(retrial_tickers))
 		if tmp > end:
 			tmp = end
@@ -43,7 +42,7 @@ def init_threads(n_threads=0, daem=False):
 	for i in range(n_threads):
 		try:
 			app = xw.App()
-			app.visible = False
+			app.visible = APP_VISIBLE
 			pid = app.pid
 			thr = threading.Thread(target=thread_main, args=[FILE_PATH, pid, i, n_threads])
 			app_arr.append(app)
