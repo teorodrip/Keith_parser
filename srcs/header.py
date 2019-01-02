@@ -6,11 +6,12 @@ import time
 import ast
 import queue
 import os
+import subprocess
 
 # MACROS
 ##########################################################################################
 
-N_THREADS = 2
+# N_THREADS = 2
 APP_VISIBLE = True
 FILE_PATH = r"Z:\keith_parser\resources\Croissance_Marges_100.xlsb"
 NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notifications\reboot.log"
@@ -58,25 +59,20 @@ RETRY_ARR = [CIQINACTIVE_RTETRIES, INVALID_IDNENTIFIER_RETRIES, REFRESH_RETRIES]
 # GLOBAL
 ##########################################################################################
 
-app_arr = []
-pid_arr = []
-threads = []
-
 # Each element is an array in this form:
 # ["TICKER_NAME", CIQINACTIVE_retries, invalid_identifier_retries, REFRESH_retries]
 # if CIQINACTIVE_retries or REFRESH_retries reaches they max retries the machine will be
 # rebooted and if invalid_identifier_retries reaches his max the ticker will be removed from DB
 tickers = queue.Queue()
 hash_retries = {}
-lock = threading.Lock()
 reboot_flag = [False]
 ObjDB = ClassSqlDb(DB_NAME, DB_USER, DB_PASSWORD, DB_HOST)
 
 # FUNCTIONS
 ##########################################################################################
 
-def print_thread_info(index, remaining):
-		print("===========================\n Thread %d\n===========================\nRemaining: %d\n===========================" % (index, remaining))
+def print_thread_info(remaining):
+		print("===========================\nRemaining: %d\n===========================" % (remaining))
 
 
 def get_tickers(remainings=False):
@@ -175,9 +171,7 @@ def parse_data (data, tickers_to_delete, final_data):
 							tickers_to_delete.append(data[i][0])
 							delete = True
 						else:
-							lock.acquire()
 							reboot_flag[0] = True
-							lock.release()
 							print("Max %s retries reached in %s, rebooting the machine" % (ERROR_ARR[k], hash_retries[data[i][0]][k]))
 							tickers_to_delete.clear()
 							tickers.put(data[i][0])
