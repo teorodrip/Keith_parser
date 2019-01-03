@@ -7,6 +7,7 @@ import ast
 import queue
 import os
 import subprocess
+import platform
 
 # MACROS
 ##########################################################################################
@@ -14,10 +15,10 @@ import subprocess
 # N_THREADS = 2
 APP_VISIBLE = True
 FILE_PATH = r"Z:\keith_parser\resources\Croissance_Marges_100.xlsb"
-NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notifications\reboot.log"
-TICKERS_FILE_PATH = r"Z:\keith_parser\notifications\tickers.log"
-START_FILE_PATH = r"Z:\keith_parser\notifications\start.log"
-END_FILE_PATH = r"Z:\keith_parser\notifications\end.log"
+NOTIFICATION_FILE_PATH = r"Z:\keith_parser\notifications_" + platform.node() + r"\reboot.log"
+TICKERS_FILE_PATH = r"Z:\keith_parser\notifications_" + platform.node() + r"\tickers.log"
+START_FILE_PATH = r"Z:\keith_parser\notifications_" + platform.node() + r"\start.log"
+END_FILE_PATH = r"Z:\keith_parser\notifications_" + platform.node() + r"\end.log"
 
 # postgres parameters
 DB_NAME = 'infrastructure'
@@ -46,7 +47,7 @@ DATA_ROWS = 100
 DATA_BEGIN = "A4"
 CIQINACTIVE_RTETRIES = 4
 INVALID_IDNENTIFIER_RETRIES = 1
-REFRESH_RETRIES = 4
+REFRESH_RETRIES = 1
 ERR_CIQ = '#CIQINACTIVE'
 ERR_INV = '(Invalid Identifier)'
 ERR_NA = 'NA'
