@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/03 17:30:23 by Mateo                                    */
+/*   Updated: 2019/01/03 18:17:13 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 #define VM_ARR {VM_NAME_1}//, VM_NAME_2}
 
 #define WRITE_BUFF 1024
+#define BATCH_SIZE 100
 #define DB_NAME "infrastructure"
 #define DB_USER "user_data_read_create"
 #define DB_PASS "user_data_read_create"
@@ -39,7 +40,7 @@
 #define REBOOT_FILE_NAME "reboot.log"
 #define START_FILE_NAME "start.log"
 #define END_FILE_NAME "end.log"
-#define TICKERS_PATH "./tickers.dat"
+#define TICKERS_PATH "./tickers/"
 #define CLEAN_COMMAND "rm -rf notifications*"
 #define TIME_OUT 90
 
