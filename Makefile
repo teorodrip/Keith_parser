@@ -6,7 +6,7 @@
 #    By: Mateo <teorodrip@protonmail.com>                                      #
 #                                                                              #
 #    Created: 2019/01/02 13:35:10 by Mateo                                     #
-#    Updated: 2019/01/03 09:37:01 by Mateo                                     #
+#    Updated: 2019/01/03 14:16:57 by Mateo                                     #
 #                                                                              #
 #******************************************************************************#
 
@@ -16,12 +16,13 @@ SHELL = /bin/bash
 
 NAME = vm_launcher
 
-C_FLAGS = -Wall -Werror -Wextra -lpthread -g
+C_FLAGS = -Wall -Werror -Wextra -lpthread -lpq -g
 
 CC = gcc
 
 FUNCS = launcher.c \
 		inotify.c \
+		data_base.c \
 		main.c
 
 SRCS_DIR = launcher/srcs/
