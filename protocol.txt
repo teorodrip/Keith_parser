@@ -1,0 +1,17 @@
+KEITH PARSER SOCKET STRUCTURE
+
+    00      00 00        00 00 00 ...
+  ------   -------      ---------------
+    a	      b 	     c
+
+a: request code (see below)
+b: data length "len(c)"
+c: data
+
+request code (first byte):
+00 => VM started well
+01 => poweroff
+02 => reboot
+03 => list of all tickers
+04 => batch of ticker and date (first byte of data reserved for mode)
+05 => VM has finished the batch
