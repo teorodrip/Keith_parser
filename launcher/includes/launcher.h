@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/03 18:17:13 by Mateo                                    */
+/*   Updated: 2019/01/07 14:44:20 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,22 +53,17 @@ typedef struct vm_data_s
 	char notification_dir[NAME_MAX];
 } vm_data_t;
 
-typedef struct time_out_data_s
+typedef struct tickers_s
 {
-	pthread_t *thread;
-	unsigned char id;
-	char *reboot;
-} time_out_data_t;
+	int len;
+	char **tickers;
+} tickers_t;
 
 pthread_mutex_t mutex[VM_NB];
 unsigned char start_success[VM_NB];
 
-void *time_out(void *arg);
-int init_inotify(char *notification_dir);
-int manage_event(struct inotify_event *i, time_out_data_t *tim_dat, char *poweroff);
 void *launcher(void *arg);
-PGresult *get_data(PGconn *conn, char *request);
-void write_tickers(PGresult *res, char *path);
+void get_data(PGconn *conn, char *request, tickers_t *tickers);
 PGconn *connect_db(const char *db_name,
 									 const char *db_user,
 									 const char *db_pass,

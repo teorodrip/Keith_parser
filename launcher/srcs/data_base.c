@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/03 11:05:18 by Mateo                                    */
-/*   Updated: 2019/01/03 18:50:54 by Mateo                                    */
+/*   Updated: 2019/01/07 14:46:09 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,10 +62,11 @@ PGconn *connect_db(const char *db_name,
 	return (conn);
 }
 
-PGresult *get_data(PGconn *conn, char *request)
+void get_data(PGconn *conn, char *request, tickers_t *tickers)
 {
 	PGresult *res;
 
+	tickers = NULL;
 	res = PQexec(conn, request);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
@@ -74,7 +75,15 @@ PGresult *get_data(PGconn *conn, char *request)
 			PQfinish(conn);
 			exit(2);
 		}
-	return (res);
+	tickers->len = PQntuples(res);
+	if (!(tickers->tickers = (char **)malloc(sizeof(char *) * tickers->len)))
+		{
+			dprintf(2, "Error: in malloc get_data\n");
+			exit(EXIT_FAILURE);
+		}
+	for (int i = 0; i < tickers->len; i++)
+			tickers->tickers[i] = strdup(PQgetvalue(res, i, 0));
+	PQclear(res);
 }
 
 void write_tickers(PGresult *res, char *path)
