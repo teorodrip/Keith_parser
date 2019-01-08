@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:47:53 by Mateo                                    */
-/*   Updated: 2019/01/08 10:29:04 by Mateo                                    */
+/*   Updated: 2019/01/08 17:33:14 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,9 @@
 #define PORT 8080
 #define ADDR INADDR_ANY
 #define MAX_CONNECTIONS 3
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 1024 //buffer must be 4 or more
 #define META_INFO_LEN 3 // 1 byte for code 2 bytes for length
+#define SIZE_32 4
 
 typedef struct queue_s
 {
@@ -58,5 +59,6 @@ void accept_client(const server_t *srv, client_t **cli);
 void init_server(server_t *srv);
 void read_clients(client_t **head);
 void decode_data(const char *buff, const ssize_t readed);
+void		invert_bytes(void *arr, const size_t size);
 
 #endif

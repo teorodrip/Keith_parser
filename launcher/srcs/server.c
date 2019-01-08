@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:45:39 by Mateo                                    */
-/*   Updated: 2019/01/08 10:18:06 by Mateo                                    */
+/*   Updated: 2019/01/08 17:57:03 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,6 +69,7 @@ void accept_client(const server_t *srv, client_t **cli)
 			new_cli->next = *cli;
 			*cli = new_cli;
 			printf("A client has made a connection\n");
+			/* send(fd, "Testig string", 14, 0); */
 		}
 	if (errno != EAGAIN && errno != EWOULDBLOCK)
 		{

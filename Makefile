@@ -6,7 +6,7 @@
 #    By: Mateo <teorodrip@protonmail.com>                                      #
 #                                                                              #
 #    Created: 2019/01/02 13:35:10 by Mateo                                     #
-#    Updated: 2019/01/03 14:16:57 by Mateo                                     #
+#    Updated: 2019/01/08 15:28:40 by Mateo                                     #
 #                                                                              #
 #******************************************************************************#
 
@@ -20,9 +20,10 @@ C_FLAGS = -Wall -Werror -Wextra -lpthread -lpq -g
 
 CC = gcc
 
-FUNCS = launcher.c \
-		inotify.c \
-		data_base.c \
+FUNCS =	data_base.c \
+		server.c \
+		communication.c \
+		invert_bytes.c \
 		main.c
 
 SRCS_DIR = launcher/srcs/

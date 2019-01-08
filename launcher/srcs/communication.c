@@ -6,49 +6,52 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/08 12:13:02 by Mateo                                    */
+/*   Updated: 2019/01/08 17:57:17 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/server.h"
 
 static unsigned char complete_reminent(const char *buff, const ssize_t readed,
-																			 unsigned char reminent, queue_t *tmp)
+																			 unsigned char leftover, char *leftover_val, ssize_t *i)
 {
-	ssize_t i;
-
-	i = 0;
-	while (reminent < readed && reminent < sizeof(uint32_t))
+	while (*i < readed && leftover < SIZE_32 * 2)
 		{
-			((uint8_t *)(&tmp->start))[i] = buff[reminent++];
-			i++;
+			leftover_val[leftover] = buff[*i];
+			leftover++;
+			(*i)++;
 		}
-	i = 0;
-	while (reminent < readed && reminent < (sizeof(uint32_t) * 2))
-		{
-			((uint8_t *)(&tmp->end))[i] = buff[reminent++];
-			i++;
-		}
-	tmp->next = queue_g;
-	queue_g = tmp;
-	return (reminent % (sizeof(uint32_t) * 2));
+	return (leftover % (SIZE_32 * 2));
 }
 
 // data size will be allways multiple of sizeof(uint32_t) * 2
-static uint16_t add_to_queue(const char *buff, const ssize_t readed, const uint16_t data_size)
+static uint16_t add_to_queue(const char *buff, const ssize_t readed,
+														 const uint16_t data_size, const unsigned char offset)
 {
-	static unsigned char reminent = 0;
+	static unsigned char leftover = 0; //when reaches 8 is ok
+	static char leftover_val[SIZE_32 * 2] = {0};
 	ssize_t i;
 	queue_t *tmp;
 
 	i = 0;
-	if (reminent)
+	if (leftover)
 		{
-			i += reminent;
-			reminent = complete_reminent(buff, readed, reminent, queue_g);
+			if ((leftover = complete_reminent(buff, readed, leftover, leftover_val, &i)))
+				return (data_size - i);
+			else
+				{
+					/* invert_bytes(leftover_val, SIZE_32); */
+					/* invert_bytes(leftover_val + SIZE_32, SIZE_32); */
+					if (!(tmp = (queue_t *)malloc(sizeof(queue_t))))
+							exit(EXIT_FAILURE);
+					tmp->start = *((uint32_t *)leftover_val);
+					tmp->end = *((uint32_t *)(leftover_val + SIZE_32));
+					tmp->next = queue_g;
+					queue_g = tmp;
+				}
 		}
-	while ((i + (sizeof(uint32_t) * 2)) < readed &&
-				 (i + (sizeof(uint32_t) * 2)) < data_size)
+	while ((i + (sizeof(uint32_t) * 2)) <= (size_t)readed &&
+				 (i + (sizeof(uint32_t) * 2)) <= data_size)
 		{
 			if (!(tmp  = (queue_t *)malloc(sizeof(queue_t))))
 				exit(2);
@@ -58,13 +61,9 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed, const uint1
 			queue_g = tmp;
 			i += sizeof(uint32_t) * 2;
 		}
-	if (i < data_size && i < readed && readed == BUFF_SIZE)
-		{
-			if (!(tmp  = (queue_t *)malloc(sizeof(queue_t))))
-				exit(2);
-			reminent = complete_reminent(buff + i, readed - i, reminent, tmp);
-		}
-	else if (readed != BUFF_SIZE)
+	if (i < data_size && i < readed && readed == BUFF_SIZE - offset)
+			leftover = complete_reminent(buff, readed, leftover, leftover_val, &i);
+	else if (i < data_size && i < readed && readed != BUFF_SIZE - offset)
 		{
 			dprintf(2, "Error: in the data of the socket");
 			exit(2);
@@ -78,9 +77,9 @@ void decode_data(const char *buff, const ssize_t readed)
 	static uint16_t data_size = 0;
 	unsigned char offset;
 
+	/* write(1, buff, readed); */
+	/* write(1, "\n", 1); */
 	offset = 0;
-	(void)offset;
-	(void)readed;
 	if (conn_code == 0xFF)
 		{
 			if (readed <= META_INFO_LEN)
@@ -115,6 +114,10 @@ void decode_data(const char *buff, const ssize_t readed)
 		case 0x05:
 			printf("Machine has finished the batch\n");
 			conn_code = 0xFF;
+			break;
+		case 0x06:
+			printf("Machine has finished the batch\n");
+			data_size = add_to_queue(buff + offset, readed - offset, data_size, offset);
 			break;
 		default:
 			printf("Connection code not recognized\n");
