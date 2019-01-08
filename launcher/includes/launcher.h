@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/07 14:44:20 by Mateo                                    */
+/*   Updated: 2019/01/07 15:27:33 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ typedef struct vm_data_s
 
 typedef struct tickers_s
 {
-	int len;
+	uint32_t len;
 	char **tickers;
 } tickers_t;
 
@@ -64,6 +64,7 @@ unsigned char start_success[VM_NB];
 
 void *launcher(void *arg);
 void get_data(PGconn *conn, char *request, tickers_t *tickers);
+void clean_tickers(tickers_t *tickers);
 PGconn *connect_db(const char *db_name,
 									 const char *db_user,
 									 const char *db_pass,

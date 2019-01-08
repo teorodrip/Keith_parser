@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/03 11:05:18 by Mateo                                    */
-/*   Updated: 2019/01/07 14:46:09 by Mateo                                    */
+/*   Updated: 2019/01/07 15:27:20 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,6 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 {
 	PGresult *res;
 
-	tickers = NULL;
 	res = PQexec(conn, request);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
@@ -75,13 +74,14 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 			PQfinish(conn);
 			exit(2);
 		}
-	tickers->len = PQntuples(res);
+	tickers->len = (uint32_t)PQntuples(res);
+	printf("Got %u tickers\n", tickers->len);
 	if (!(tickers->tickers = (char **)malloc(sizeof(char *) * tickers->len)))
 		{
 			dprintf(2, "Error: in malloc get_data\n");
 			exit(EXIT_FAILURE);
 		}
-	for (int i = 0; i < tickers->len; i++)
+	for (uint32_t i = 0; i < tickers->len; i++)
 			tickers->tickers[i] = strdup(PQgetvalue(res, i, 0));
 	PQclear(res);
 }
@@ -150,4 +150,11 @@ void write_tickers(PGresult *res, char *path)
 				}
 		}
 	close(fd);
+}
+
+void clean_tickers(tickers_t *tickers)
+{
+	for (uint32_t i = 0; i < tickers->len; i++)
+		free(tickers->tickers[i]);
+	free(tickers->tickers);
 }

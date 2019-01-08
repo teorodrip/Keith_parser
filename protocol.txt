@@ -15,3 +15,5 @@ request code (first byte):
 03 => list of all tickers
 04 => batch of ticker and date (first byte of data reserved for mode)
 05 => VM has finished the batch
+06 => recive range of tickers to put in queue (size of 4 * 2 bytes or 2 uint32_t for start and end)
+ff => NULL request code
