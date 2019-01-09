@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:47:53 by Mateo                                    */
-/*   Updated: 2019/01/08 17:33:14 by Mateo                                    */
+/*   Updated: 2019/01/09 16:04:58 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,20 +45,13 @@ typedef struct 	server_s
 typedef struct 	client_s
 {
 	int client_fd;
+	unsigned char id;
 	char *name;
 	struct client_s *next;
 }								client_t;
 
-#ifndef EXTERN
-#define EXTERN extern
-#endif
-
-EXTERN queue_t *queue_g;
-
 void accept_client(const server_t *srv, client_t **cli);
 void init_server(server_t *srv);
-void read_clients(client_t **head);
-void decode_data(const char *buff, const ssize_t readed);
 void		invert_bytes(void *arr, const size_t size);
 
 #endif

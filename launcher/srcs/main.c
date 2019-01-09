@@ -6,17 +6,21 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 14:21:03 by Mateo                                    */
-/*   Updated: 2019/01/08 10:57:30 by Mateo                                    */
+/*   Updated: 2019/01/09 16:45:26 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/launcher.h"
 #define EXTERN
-#include "../includes/server.h"
+#include "../includes/launcher.h"
 
 void end_proper(client_t *cli, server_t *srv)
 {
 	client_t *tmp;
+
+	for(int i = 0; i < VM_NB; i++)
+		free(virtual_machines[i]);
+	free(virtual_machines);
+
 	while (cli)
 		{
 			tmp = cli->next;
@@ -25,6 +29,17 @@ void end_proper(client_t *cli, server_t *srv)
 			cli = tmp;
 		}
 	close(srv->server_fd);
+}
+
+void init_virtual_machines()
+{
+	if (!(virtual_machines = (char **)malloc(sizeof(char *))))
+		{
+			dprintf(2, "Error: malloc init_vm\n");
+			exit(EXIT_FAILURE);
+		}
+	virtual_machines[0] = strdup(VM_NAME_1);
+	virtual_machines[1] = strdup(VM_NAME_2);
 }
 
 int main()
@@ -36,18 +51,18 @@ int main()
 	uint32_t pos;
 	/* unsigned char machines_running; */
 
-	queue_g = NULL;
 	conn = connect_db(DB_NAME, DB_USER, DB_PASS, DB_HOST);
 	get_data(conn, SQL_ALL_REQ, &tickers);
 	PQfinish(conn);
 	init_server(&srv);
 	cli = NULL;
+	queue_g = NULL;
 	pos = 0;
 	/* machines_running = 0; */
-	while (pos < tickers.len || queue_g != NULL)// || machines_running)//c++ parsing
+	while (pos < tickers.n_tuples || queue_g != NULL)// || machines_running)//c++ parsing
 		{
 			accept_client(&srv, &cli);
-			read_clients(&cli);
+			read_clients(&cli, &tickers);
 			usleep(100000);
 		}
 

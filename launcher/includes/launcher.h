@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/07 15:27:33 by Mateo                                    */
+/*   Updated: 2019/01/09 16:31:58 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,12 @@
 #include <string.h>
 #include <pthread.h>
 #include </usr/include/postgresql/libpq-fe.h>
+#include "./server.h"
 
-#define VM_NB 1
+#define VM_NB 2
 #define VM_NAME_1 "windows_1"
 #define VM_NAME_2 "windows_2"
-#define VM_ARR {VM_NAME_1}//, VM_NAME_2}
+#define VM_ARR {VM_NAME_1, VM_NAME_2}//, VM_NAME_2}
 
 #define WRITE_BUFF 1024
 #define BATCH_SIZE 100
@@ -55,17 +56,27 @@ typedef struct vm_data_s
 
 typedef struct tickers_s
 {
-	uint32_t len;
+	size_t n_tuples;
 	char **tickers;
 } tickers_t;
 
 pthread_mutex_t mutex[VM_NB];
 unsigned char start_success[VM_NB];
 
+#ifndef EXTERN
+#define EXTERN extern
+#endif
+
+EXTERN queue_t *queue_g;
+EXTERN char **virtual_machines;
+
 void *launcher(void *arg);
 void get_data(PGconn *conn, char *request, tickers_t *tickers);
 void clean_tickers(tickers_t *tickers);
-PGconn *connect_db(const char *db_name,
+void read_clients(client_t **head, const tickers_t *tickers);
+void decode_data(const char *buff, const ssize_t readed,
+								 const client_t *cli, const tickers_t *tickers);
+	PGconn *connect_db(const char *db_name,
 									 const char *db_user,
 									 const char *db_pass,
 									 const char *db_host);

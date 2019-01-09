@@ -6,11 +6,11 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:45:39 by Mateo                                    */
-/*   Updated: 2019/01/08 17:57:03 by Mateo                                    */
+/*   Updated: 2019/01/09 15:24:52 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/server.h"
+#include "../includes/launcher.h"
 
 void init_server(server_t *srv)
 {
@@ -69,7 +69,6 @@ void accept_client(const server_t *srv, client_t **cli)
 			new_cli->next = *cli;
 			*cli = new_cli;
 			printf("A client has made a connection\n");
-			/* send(fd, "Testig string", 14, 0); */
 		}
 	if (errno != EAGAIN && errno != EWOULDBLOCK)
 		{
@@ -95,7 +94,7 @@ void disconnect_client(client_t *prev, client_t **cli, client_t **head)
 
 }
 
-void read_clients(client_t **head)
+void read_clients(client_t **head, const tickers_t *tickers)
 {
 	client_t *cli;
 	client_t *prev;
@@ -108,7 +107,7 @@ void read_clients(client_t **head)
 		{
 			while ((readed = read(cli->client_fd, buff, BUFF_SIZE)) > 0)
 				{
-					decode_data(buff, readed);
+					decode_data(buff, readed, cli, tickers);
 				}
 			if (readed == 0 || (readed == -1 && (errno != EAGAIN && errno != EWOULDBLOCK)))
 				{

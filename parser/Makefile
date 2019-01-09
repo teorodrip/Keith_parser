@@ -6,7 +6,7 @@
 #    By: Mateo <teorodrip@protonmail.com>                                      #
 #                                                                              #
 #    Created: 2019/01/04 17:47:52 by Mateo                                     #
-#    Updated: 2019/01/04 17:49:52 by Mateo                                     #
+#    Updated: 2019/01/09 18:43:41 by Mateo                                     #
 #                                                                              #
 #******************************************************************************#
 
@@ -14,13 +14,15 @@
 
 SHELL = /bin/bash
 
-NAME = reg
+NAME = parser
 
 C_FLAGS = -Wall -Werror -Wextra
 
 CC = g++
 
-FUNCS =
+FUNCS = client.cpp \
+		dir_watcher.cpp \
+		main.cpp
 
 SRCS_DIR = srcs/
 

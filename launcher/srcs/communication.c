@@ -6,12 +6,11 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/08 17:57:17 by Mateo                                    */
+/*   Updated: 2019/01/09 18:34:36 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../includes/server.h"
-
+#include "../includes/launcher.h"
 static unsigned char complete_reminent(const char *buff, const ssize_t readed,
 																			 unsigned char leftover, char *leftover_val, ssize_t *i)
 {
@@ -71,7 +70,8 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 	return (data_size - i);
 }
 
-void decode_data(const char *buff, const ssize_t readed)
+void decode_data(const char *buff, const ssize_t readed,
+								 const client_t *cli, const tickers_t *tickers)
 {
 	static uint8_t conn_code = 0xff;
 	static uint16_t data_size = 0;
@@ -105,6 +105,7 @@ void decode_data(const char *buff, const ssize_t readed)
 			break;
 		case 0x03:
 			printf("Sending list of all tickers\n");
+			send(cli->client_fd, &(tickers->n_tuples), sizeof(size_t), 0);
 			conn_code = 0xFF;
 			break;
 		case 0x04:
@@ -118,6 +119,11 @@ void decode_data(const char *buff, const ssize_t readed)
 		case 0x06:
 			printf("Machine has finished the batch\n");
 			data_size = add_to_queue(buff + offset, readed - offset, data_size, offset);
+			break;
+		case 0x07:
+			printf("Sending watching directories\n");
+			unsigned char n = VM_NB;
+			send(cli->client_fd, &(n), sizeof(unsigned char), 0);
 			break;
 		default:
 			printf("Connection code not recognized\n");
