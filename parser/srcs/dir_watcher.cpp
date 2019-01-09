@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 17:10:12 by Mateo                                    //
-//   Updated: 2019/01/09 18:44:18 by Mateo                                    //
+//   Updated: 2019/01/09 19:11:27 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -43,9 +43,10 @@ void dir_watcher::watch_directory()
 
 	while ((readed = read(fd_notify, buff, BUFF_SIZE)) > 0)
 		{
-			for(buff_tmp = buff; buff < buff + readed;)
+			for(buff_tmp = buff; buff_tmp < buff + readed;)
 				{
 					event = (struct inotify_event *)buff_tmp;
+					manage_event(event);
 					buff_tmp += sizeof(struct inotify_event) + event->len;
 				}
 		}
