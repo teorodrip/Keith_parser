@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/09 18:45:54 by Mateo                                    //
+//   Updated: 2019/01/10 16:01:12 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -17,16 +17,23 @@ int main()
 	client cli= client();
 	size_t n_tickers;
 	unsigned char n_vm;
+	int *ticker_retries;
+	dir_watcher *watcher;
 
 	cli.init();
 	n_tickers = cli.get_number_tickers();
+	ticker_retries = new int[n_tickers]();
+	(void)ticker_retries;
 	printf("Get %lu tickers from launcher\n", n_tickers);
 	n_vm = cli.get_watching_directories();
 	printf("Get %u tickers from launcher\n", n_vm);
-	dir_watcher watcher = dir_watcher(0);
+	watcher = new dir_watcher[n_vm];
+	for (int i = 0; i < n_vm; i++)
+		watcher[i] = dir_watcher(i);
 	while(true)
 		{
-			watcher.watch_directory();
+			for (int i = 0; i < n_vm; i++)
+				watcher[i].watch_directory();
 			usleep(100000);
 		}
 	// xlsxioreader book;

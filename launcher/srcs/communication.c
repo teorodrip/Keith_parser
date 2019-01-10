@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/09 18:34:36 by Mateo                                    */
+/*   Updated: 2019/01/10 17:13:17 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,21 +14,21 @@
 static unsigned char complete_reminent(const char *buff, const ssize_t readed,
 																			 unsigned char leftover, char *leftover_val, ssize_t *i)
 {
-	while (*i < readed && leftover < SIZE_32 * 2)
+	while (*i < readed && leftover < sizeof(queue_t))
 		{
 			leftover_val[leftover] = buff[*i];
 			leftover++;
 			(*i)++;
 		}
-	return (leftover % (SIZE_32 * 2));
+	return (leftover % sizeof(queue_t));
 }
 
-// data size will be allways multiple of sizeof(uint32_t) * 2
+// data size will be allways multiple of sizeof(queue_t)
 static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 														 const uint16_t data_size, const unsigned char offset)
 {
-	static unsigned char leftover = 0; //when reaches 8 is ok
-	static char leftover_val[SIZE_32 * 2] = {0};
+	static unsigned char leftover = 0; //when reaches sizeof(queue_t) is ok
+	static char leftover_val[sizeof(queue_t)];
 	ssize_t i;
 	queue_t *tmp;
 
@@ -39,29 +39,25 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 				return (data_size - i);
 			else
 				{
-					/* invert_bytes(leftover_val, SIZE_32); */
-					/* invert_bytes(leftover_val + SIZE_32, SIZE_32); */
 					if (!(tmp = (queue_t *)malloc(sizeof(queue_t))))
-							exit(EXIT_FAILURE);
-					tmp->start = *((uint32_t *)leftover_val);
-					tmp->end = *((uint32_t *)(leftover_val + SIZE_32));
+						exit(EXIT_FAILURE);
+					*tmp = *((queue_t *)leftover_val);
 					tmp->next = queue_g;
 					queue_g = tmp;
 				}
 		}
-	while ((i + (sizeof(uint32_t) * 2)) <= (size_t)readed &&
-				 (i + (sizeof(uint32_t) * 2)) <= data_size)
+	while ((i + sizeof(queue_t)) <= (size_t)readed &&
+				 (i + sizeof(queue_t)) <= data_size)
 		{
 			if (!(tmp  = (queue_t *)malloc(sizeof(queue_t))))
 				exit(2);
-			tmp->start = *((uint32_t *)buff + i);
-			tmp->end = *((uint32_t *)(buff + i + sizeof(uint32_t)));
+			*tmp = *((queue_t *)leftover_val);
 			tmp->next = queue_g;
 			queue_g = tmp;
-			i += sizeof(uint32_t) * 2;
+			i += sizeof(queue_t);
 		}
 	if (i < data_size && i < readed && readed == BUFF_SIZE - offset)
-			leftover = complete_reminent(buff, readed, leftover, leftover_val, &i);
+		leftover = complete_reminent(buff, readed, leftover, leftover_val, &i);
 	else if (i < data_size && i < readed && readed != BUFF_SIZE - offset)
 		{
 			dprintf(2, "Error: in the data of the socket");
@@ -119,11 +115,14 @@ void decode_data(const char *buff, const ssize_t readed,
 		case 0x06:
 			printf("Machine has finished the batch\n");
 			data_size = add_to_queue(buff + offset, readed - offset, data_size, offset);
+			if (!data_size)
+				conn_code = 0xFF;
 			break;
 		case 0x07:
 			printf("Sending watching directories\n");
 			unsigned char n = VM_NB;
 			send(cli->client_fd, &(n), sizeof(unsigned char), 0);
+			conn_code = 0xFF;
 			break;
 		default:
 			printf("Connection code not recognized\n");

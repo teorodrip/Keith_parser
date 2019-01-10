@@ -6,7 +6,7 @@
 #    By: Mateo <teorodrip@protonmail.com>                                      #
 #                                                                              #
 #    Created: 2019/01/04 17:47:52 by Mateo                                     #
-#    Updated: 2019/01/09 19:02:36 by Mateo                                     #
+#    Updated: 2019/01/10 19:09:27 by Mateo                                     #
 #                                                                              #
 #******************************************************************************#
 
@@ -16,12 +16,13 @@ SHELL = /bin/bash
 
 NAME = parser
 
-C_FLAGS = -Wall -Werror -Wextra -g
+C_FLAGS = -Wall -Werror -Wextra -g -lxlsxio_read
 
 CC = g++
 
 FUNCS = client.cpp \
 		dir_watcher.cpp \
+		parser.cpp \
 		main.cpp
 
 SRCS_DIR = srcs/

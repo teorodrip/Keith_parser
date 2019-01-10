@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 17:10:12 by Mateo                                    //
-//   Updated: 2019/01/09 19:11:27 by Mateo                                    //
+//   Updated: 2019/01/10 19:16:09 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -14,9 +14,13 @@
 #include <sys/inotify.h>
 #include <fcntl.h>
 
+dir_watcher::dir_watcher()
+{
+}
+
 dir_watcher::dir_watcher(const unsigned char id)
 {
-	path = DEFAULT_PATH + std::to_string(id);
+	path = DEFAULT_PATH + std::to_string(id) + "/";
   if ((fd_notify = inotify_init()) == -1)
   	{
   	  printf("Can not init inotify");
@@ -59,5 +63,7 @@ void dir_watcher::manage_event(struct inotify_event *event)
 		{
 			printf("Parsing %s\n", event->name);
 			//parse the sheet
+			excel_parser ex = excel_parser(this->path + event->name);
+			ex.init();
 		}
 }

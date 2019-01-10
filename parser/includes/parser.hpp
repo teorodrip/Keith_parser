@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/09 18:39:07 by Mateo                                    //
+//   Updated: 2019/01/10 19:18:23 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -20,6 +20,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <iostream>
+#include <vector>
 
 #define META_INFO_LEN 3
 #define PORT 8080
@@ -45,6 +46,8 @@ public:
 	void init();
 	size_t get_number_tickers();
 	unsigned char get_watching_directories();
+	void signal_shutdown(const unsigned char vm_nb);
+	void signal_reboot(const unsigned char vm_nb);
 };
 
 class dir_watcher
@@ -58,6 +61,20 @@ public:
 	dir_watcher();
 	dir_watcher(const unsigned char machine_id);
 	void watch_directory();
+};
+
+class excel_parser
+{
+private:
+	std::string file_path;
+	xlsxioreader book;
+	xlsxioreadersheet *sheets;
+	std::vector<std::string> sheet_names;
+
+public:
+	excel_parser();
+	excel_parser(std::string file_path);
+	void init();
 };
 
 #endif
