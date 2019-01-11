@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 17:10:12 by Mateo                                    //
-//   Updated: 2019/01/10 19:16:09 by Mateo                                    //
+//   Updated: 2019/01/11 14:19:36 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -65,5 +65,6 @@ void dir_watcher::manage_event(struct inotify_event *event)
 			//parse the sheet
 			excel_parser ex = excel_parser(this->path + event->name);
 			ex.init();
+			ex.parse_book();
 		}
 }

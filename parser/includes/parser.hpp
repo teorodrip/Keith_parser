@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/10 19:18:23 by Mateo                                    //
+//   Updated: 2019/01/11 16:40:14 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -21,6 +21,8 @@
 #include <fcntl.h>
 #include <iostream>
 #include <vector>
+#include <nlohmann/json.hpp>
+
 
 #define META_INFO_LEN 3
 #define PORT 8080
@@ -29,11 +31,20 @@
 #define FILE_NAME "./sheet2.xlsx"
 #define DEFAULT_PATH "./outputs_windows_"
 
-typedef struct tickers_s
+//parser macros
+#define TICKER_START "Ticker/ID"
+#define HALF_TICKER "HALF_OF_TICKER"
+#define END_TICKER "END_OF_TICKER"
+#define F_START 0x1
+#define F_HALF 0x2
+#define F_END 0x4
+#define F_END_PARSING 0x8
+
+typedef struct ticker_json_s
 {
 	size_t len;
-	char **tickers;
-} tickers_t;
+	nlohmann::json *j;
+} ticker_json_t;
 
 class client
 {
@@ -68,13 +79,21 @@ class excel_parser
 private:
 	std::string file_path;
 	xlsxioreader book;
-	xlsxioreadersheet *sheets;
 	std::vector<std::string> sheet_names;
+	size_t ticker_index;
+	int flags;
+
+	bool issdigit(char *str);
+	void handle_fatal_error(const std::string message);
+	void parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter, ticker_json_t *j_year);
+	void init_ticker(const xlsxioreadersheet sheet, ticker_json_t *j);
+	void init_date(const xlsxioreadersheet sheet, ticker_json_t *j);
 
 public:
 	excel_parser();
 	excel_parser(std::string file_path);
 	void init();
+	void parse_book();
 };
 
 #endif
