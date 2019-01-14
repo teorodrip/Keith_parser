@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:45:39 by Mateo                                    */
-/*   Updated: 2019/01/09 15:24:52 by Mateo                                    */
+/*   Updated: 2019/01/14 11:03:27 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,7 @@ void accept_client(const server_t *srv, client_t **cli)
 					exit(EXIT_FAILURE);
 				}
 			new_cli->client_fd = fd;
+			new_cli->id = (*cli) ? (*cli)->id + 1 : 0;
 			new_cli->next = *cli;
 			*cli = new_cli;
 			printf("A client has made a connection\n");
