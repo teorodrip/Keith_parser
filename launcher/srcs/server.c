@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:45:39 by Mateo                                    */
-/*   Updated: 2019/01/14 11:03:27 by Mateo                                    */
+/*   Updated: 2019/01/14 15:15:14 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,48 @@ void init_server(server_t *srv)
 		}
 }
 
-void accept_client(const server_t *srv, client_t **cli)
+static void assign_client(const int fd, client_t *new_cli, client_t **cli_head)
+{
+	client_t *tmp;
+	client_t *tmp_prev;
+
+	new_cli->client_fd = fd;
+	tmp_prev = *cli_head;
+	if (!tmp_prev)
+		{
+			new_cli->id = 0;
+			new_cli->next = *cli_head;
+			*cli_head = new_cli;
+			return;
+		}
+	tmp = tmp_prev->next;
+	while (tmp)
+		{
+			if  (tmp_prev->id - tmp->id > 1)
+				{
+					new_cli->id = tmp->id + 1;
+					tmp_prev->next = new_cli;
+					new_cli->next = tmp;
+					return;
+				}
+			tmp_prev = tmp;
+			tmp = tmp->next;
+		}
+	if (tmp_prev->id)
+		{
+			new_cli->id = tmp_prev->id - 1;
+			tmp_prev->next = new_cli;
+			new_cli->next = NULL;
+		}
+	else
+		{
+			new_cli->id = (*cli_head)->id + 1;
+			new_cli->next = *cli_head;
+			*cli_head = new_cli;
+		}
+}
+
+void accept_client(const server_t *srv, client_t **cli_head)
 {
 	int fd;
 	client_t *new_cli;
@@ -65,10 +106,8 @@ void accept_client(const server_t *srv, client_t **cli)
 					dprintf(2,"Error: setting fd flag\n");
 					exit(EXIT_FAILURE);
 				}
-			new_cli->client_fd = fd;
-			new_cli->id = (*cli) ? (*cli)->id + 1 : 0;
-			new_cli->next = *cli;
-			*cli = new_cli;
+			assign_client(fd, new_cli, cli_head);
+			*cli_head = new_cli;
 			printf("A client has made a connection\n");
 		}
 	if (errno != EAGAIN && errno != EWOULDBLOCK)
@@ -95,7 +134,7 @@ void disconnect_client(client_t *prev, client_t **cli, client_t **head)
 
 }
 
-void read_clients(client_t **head, const tickers_t *tickers)
+void read_clients(client_t **head, PGresult *res)
 {
 	client_t *cli;
 	client_t *prev;
@@ -108,7 +147,7 @@ void read_clients(client_t **head, const tickers_t *tickers)
 		{
 			while ((readed = read(cli->client_fd, buff, BUFF_SIZE)) > 0)
 				{
-					decode_data(buff, readed, cli, tickers);
+					decode_data(buff, readed, cli, res);
 				}
 			if (readed == 0 || (readed == -1 && (errno != EAGAIN && errno != EWOULDBLOCK)))
 				{

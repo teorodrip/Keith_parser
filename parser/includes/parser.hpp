@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/11 16:40:14 by Mateo                                    //
+//   Updated: 2019/01/14 18:38:47 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -55,7 +55,7 @@ private:
 public:
 	client();
 	void init();
-	size_t get_number_tickers();
+	char **get_tickers(short *n_tickers);
 	unsigned char get_watching_directories();
 	void signal_shutdown(const unsigned char vm_nb);
 	void signal_reboot(const unsigned char vm_nb);

@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 09:56:44 by Mateo                                    //
-//   Updated: 2019/01/10 16:56:13 by Mateo                                    //
+//   Updated: 2019/01/15 11:00:12 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -34,19 +34,60 @@ void client::init()
 		}
 }
 
-size_t client::get_number_tickers()
+char **client::get_tickers(short *n_tickers)
 {
 	uint8_t request[META_INFO_LEN + 1] = {0x03, 0x00, 0x00, 0x00};
-	size_t data_size;
+	char buff[BUFF_SIZE];
+	short len;
+	int i, buff_pos;
 	int readed;
+	char **bloom_tick;
+	unsigned char rem;
 
 	if (send(sockfd, request, META_INFO_LEN + 1, 0) < 0 ||
-			(readed = read(sockfd, &data_size, sizeof(size_t))) != sizeof(size_t))
+			(readed = read(sockfd, buff, META_INFO_LEN)) != META_INFO_LEN ||
+			buff[0] != 0x03)
 		{
 			std::cerr << "Error: obtaining tickers from launcher\n";
 			exit(EXIT_FAILURE);
 		}
-	return (data_size);
+	*n_tickers = *((short *)buff);
+	bloom_tick = new char*[*n_tickers];
+	i = 0;
+	buff_pos = 0;
+	len = 0;
+	rem = 0;
+	while ((readed = read(sockfd, buff, BUFF_SIZE)) > 0)
+		{
+			buff_pos = 0;
+			while (buff_pos < BUFF_SIZE)
+				{
+					if (rem)
+						{
+							memcpy(bloom_tick[i], buff, rem);
+							buff_pos += rem;
+							rem = 0;
+						}
+					else
+						{
+							len = buff[buff_pos++]; //this len includes null at end
+							bloom_tick[i] = new char[len];
+							if (len < (readed - buff_pos))
+								{
+									memcpy(bloom_tick[i], buff + buff_pos, len);
+									buff_pos += len;
+									i++;
+								}
+							else
+								{
+									memcpy(bloom_tick[i], buff + buff_pos, readed - buff_pos);
+									rem = len - (readed - buff_pos);
+									buff_pos += (readed - buff_pos);
+								}
+						}
+				}
+		}
+	return (bloom_tick);
 }
 
 unsigned char client::get_watching_directories()

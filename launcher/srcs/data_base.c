@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/03 11:05:18 by Mateo                                    */
-/*   Updated: 2019/01/09 16:36:14 by Mateo                                    */
+/*   Updated: 2019/01/14 15:50:02 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,7 +62,7 @@ PGconn *connect_db(const char *db_name,
 	return (conn);
 }
 
-void get_data(PGconn *conn, char *request, tickers_t *tickers)
+PGresult *get_data(PGconn *conn, char *request)
 {
 	PGresult *res;
 
@@ -74,22 +74,23 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 			PQfinish(conn);
 			exit(2);
 		}
-	tickers->n_tuples = (size_t)PQntuples(res);
-	printf("Got %lu tickers\n", tickers->n_tuples);
-	if (!(tickers->tickers = (char **)malloc(sizeof(char *) * tickers->n_tuples)))
-		{
-			dprintf(2, "Error: in malloc get_data\n");
-			exit(EXIT_FAILURE);
-		}
-	for (size_t i = 0; i < tickers->n_tuples; i++)
-		{
-			if (!(tickers->tickers[i] = strdup(PQgetvalue(res, i, 0))))
-				{
-					dprintf(2, "Error: strdup get_data\n");
-					exit(EXIT_FAILURE);
-				}
-		}
-	PQclear(res);
+	return (res);
+	/* tickers->n_tuples = (size_t)PQntuples(res); */
+	/* printf("Got %lu tickers\n", tickers->n_tuples); */
+	/* if (!(tickers->tickers = (char **)malloc(sizeof(char *) * tickers->n_tuples))) */
+	/* 	{ */
+	/* 		dprintf(2, "Error: in malloc get_data\n"); */
+	/* 		exit(EXIT_FAILURE); */
+	/* 	} */
+	/* for (size_t i = 0; i < tickers->n_tuples; i++) */
+	/* 	{ */
+	/* 		if (!(tickers->tickers[i] = strdup(PQgetvalue(res, i, 0)))) */
+	/* 			{ */
+	/* 				dprintf(2, "Error: strdup get_data\n"); */
+	/* 				exit(EXIT_FAILURE); */
+	/* 			} */
+	/* 	} */
+	/* PQclear(res); */
 }
 
 void write_tickers(PGresult *res, char *path)
