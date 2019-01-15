@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/14 16:50:06 by Mateo                                    */
+/*   Updated: 2019/01/15 18:35:39 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@
 #define VM_ARR {VM_NAME_1, VM_NAME_2}//, VM_NAME_2}
 
 #define WRITE_BUFF 1024
-#define BATCH_SIZE 100
+#define BATCH_SIZE 10
 #define DB_NAME "pam_test"
 #define DB_USER "capiq_manager"
 #define DB_PASS "capiqunchartech"
@@ -36,7 +36,7 @@
 #define DB_TIMOUT "10" //Max
 #define SQL_ALL_REQ "SELECT ticker_bbg, ticker_capiq FROM main_v2.static_inv_universe WHERE ticker_capiq IS NOT NULL AND ticker_capiq != '' ORDER BY is_invested DESC LIMIT 50"
 /* #define SQL_ALL_REQ "SELECT A.tickers FROM data.test_gregoire_ticker_list A\nLEFT JOIN (\nSELECT DISTINCT ON (ticker) ticker, event_time\nFROM data.test_gregoire_growth_margin\nORDER BY ticker, event_time DESC\n) B on A.tickers = B.ticker\nORDER BY event_time ASC NULLS FIRST" */
-#define PARSER_TICKERS_COL 0
+#define PARSER_TICKERS_COL 1
 
 #define NAME_MAX 100
 #define BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
@@ -59,7 +59,9 @@ typedef struct vm_data_s
 typedef struct tickers_s
 {
 	size_t n_tuples;
-	char **tickers;
+	size_t n_cols;
+	unsigned char **tick_len;
+	PGresult *res;
 } tickers_t;
 
 pthread_mutex_t mutex[VM_NB];
@@ -73,12 +75,12 @@ EXTERN queue_t *queue_g;
 EXTERN char **virtual_machines;
 
 void *launcher(void *arg);
-PGresult *get_data(PGconn *conn, char *request);
+void get_data(PGconn *conn, char *request, tickers_t *tickers);
 void clean_tickers(tickers_t *tickers);
-void read_clients(client_t **head, PGresult *);
+void read_clients(client_t **head, tickers_t *tickers);
 void decode_data(const char *buff, const ssize_t readed,
-								 const client_t *cli, PGresult *);
-	PGconn *connect_db(const char *db_name,
+								 const client_t *cli, tickers_t *tickers);
+PGconn *connect_db(const char *db_name,
 									 const char *db_user,
 									 const char *db_pass,
 									 const char *db_host);

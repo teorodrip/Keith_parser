@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/14 17:11:11 by Mateo                                    */
+/*   Updated: 2019/01/15 18:47:55 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,68 +66,75 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 	return (data_size - i);
 }
 
-static void send_tickers_parser(const client_t *cli, PGresult *res)
+static void send_tickers_parser(const client_t *cli, tickers_t *tickers)
 {
-	int n_tuples = PQntuples(res);
+	unsigned char len = 0;
+	size_t buff_len = 0;
+	size_t j;
+	char *buff;
+	char *value;
+
+	for (int i = 0; i < tickers->n_tuples; i++)
+		buff_len += tickers->tick_len[i][PARSER_TICKERS_COL];
+	buff_len = (buff_len + 2 * tickers->n_tuples + META_INFO_LEN);
+	if (!(buff = (char *)malloc(sizeof(char) * buff_len)))
+		{
+			dprintf(2, "Error: in malloc send_tickers\n");
+			exit(2);
+		}
+	//assign meta info (3 bytes)
+	buff[0] = 0x03;
+	*((unsigned short *)(buff + 1)) = tickers->n_tuples;
+	j = META_INFO_LEN;
+	for (int i = 0; i < tickers->n_tuples; i++)
+		{
+			value = PQgetvalue(tickers->res, i, PARSER_TICKERS_COL);
+			len = tickers->tick_len[i][PARSER_TICKERS_COL];
+			buff[j++] = len;
+			memcpy(buff + j, value, len);
+			j += len;
+		}
+	send(cli->client_fd, buff, buff_len, 0x0);
+}
+
+static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
+{
+	unsigned short n_tuples = PQntuples(res);
 	size_t len = 0;
 	size_t buff_len;
 	size_t j;
 	char *buff;
 	char *value;
 
+	n_tuples = 3;
 	for (int i = 0; i < n_tuples; i++)
 		len += strlen(PQgetvalue(res, i, PARSER_TICKERS_COL));
-	buff_len = (len + n_tuples + META_INFO_LEN);
+	buff_len = (len + 3 * n_tuples + META_INFO_LEN + 1);
 	if (!(buff = (char *)malloc(sizeof(char) * buff_len)))
 		{
 			dprintf(2, "Error: in malloc send_tickers\n");
 			exit(2);
 		}
-	buff[0] = 0x3;
-	*((short *)buff + 1) = n_tuples;
-	j = 0;
+	//assign meta info (3 bytes)
+	buff[0] = 0x04;
+	*((unsigned short *)(buff + 1)) = buff_len - META_INFO_LEN;
+	j = META_INFO_LEN;
+	buff[j++] = n_tuples;
 	for (int i = 0; i < n_tuples; i++)
 		{
 			value = PQgetvalue(res, i, PARSER_TICKERS_COL);
-			len = strlen(value);
-			memcpy(buff + META_INFO_LEN + j, value, len + 1);
-			j += len + 1;
+			len = strlen(value) + 1;
+			*((unsigned short *)(buff + j)) = (unsigned short)i;
+			j += 2;
+			buff[j++] = (unsigned char)len;
+			memcpy(buff + j, value, len);
+			j += len;
 		}
 	send(cli->client_fd, buff, buff_len, 0x0);
 }
 
-static void send_tickers_vm(const client_t *cli, PGresult *res)
-{
-	int n_tuples = PQntuples(res);
-	size_t len = 0;
-	size_t buff_len;
-	size_t j;
-	char *buff;
-	char *value;
-
-	for (int i = 0; i < n_tuples; i++)
-		len += strlen(PQgetvalue(res, i, PARSER_TICKERS_COL));
-	buff_len = (len + 2 * n_tuples + META_INFO_LEN);
-	if (!(buff = (char *)malloc(sizeof(char) * buff_len)))
-		{
-			dprintf(2, "Error: in malloc send_tickers\n");
-			exit(2);
-		}
-	buff[0] = 0x3;
-	*((short *)buff + 1) = n_tuples;
-	j = 0;
-	for (int i = 0; i < n_tuples; i++)
-		{
-			value = PQgetvalue(res, i, PARSER_TICKERS_COL);
-			len = strlen(value);
-			buff[META_INFO_LEN + j] = len;
-			memcpy(buff + META_INFO_LEN + j, value, len + 1);
-			j += len + 2;
-		}
-	send(cli->client_fd, buff, buff_len, 0x0);
-}
 void decode_data(const char *buff, const ssize_t readed,
-								 const client_t *cli, PGresult *res)
+								 const client_t *cli, tickers_t *tickers)
 {
 	static uint8_t conn_code = 0xff;
 	static uint16_t data_size = 0;
@@ -149,6 +156,7 @@ void decode_data(const char *buff, const ssize_t readed,
 		{
 		case 0x00:
 			printf("Machine started well\n");
+			send_tickers_vm(cli, tickers);
 			conn_code = 0xFF;
 			break;
 		case 0x01:
@@ -161,7 +169,7 @@ void decode_data(const char *buff, const ssize_t readed,
 			break;
 		case 0x03:
 			printf("Sending list of all tickers\n");
-			send_tickers(cli, res);
+			send_tickers_parser(cli, tickers);
 			conn_code = 0xFF;
 			break;
 		case 0x04:

@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/14 18:38:47 by Mateo                                    //
+//   Updated: 2019/01/15 17:08:05 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -27,7 +27,7 @@
 #define META_INFO_LEN 3
 #define PORT 8080
 #define ADDR INADDR_ANY
-#define BUFF_SIZE 1024
+#define BUFF_SIZE 1024 //buffer must be greater than the length of the max ticker
 #define FILE_NAME "./sheet2.xlsx"
 #define DEFAULT_PATH "./outputs_windows_"
 
@@ -51,11 +51,12 @@ class client
 private:
 	struct sockaddr_in serv_addr;
 	int sockfd;
+	char **init_bloom_tick(unsigned short *n_tickers, const char *buff, const int readed, unsigned int *buff_pos);
 
-public:
-	client();
+		public:
+		 client();
 	void init();
-	char **get_tickers(short *n_tickers);
+	char **get_tickers(unsigned short *n_tickers);
 	unsigned char get_watching_directories();
 	void signal_shutdown(const unsigned char vm_nb);
 	void signal_reboot(const unsigned char vm_nb);

@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:45:39 by Mateo                                    */
-/*   Updated: 2019/01/14 15:15:14 by Mateo                                    */
+/*   Updated: 2019/01/15 18:36:11 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,7 +134,7 @@ void disconnect_client(client_t *prev, client_t **cli, client_t **head)
 
 }
 
-void read_clients(client_t **head, PGresult *res)
+void read_clients(client_t **head, tickers_t *tickers)
 {
 	client_t *cli;
 	client_t *prev;
@@ -147,7 +147,7 @@ void read_clients(client_t **head, PGresult *res)
 		{
 			while ((readed = read(cli->client_fd, buff, BUFF_SIZE)) > 0)
 				{
-					decode_data(buff, readed, cli, res);
+					decode_data(buff, readed, cli, tickers);
 				}
 			if (readed == 0 || (readed == -1 && (errno != EAGAIN && errno != EWOULDBLOCK)))
 				{
