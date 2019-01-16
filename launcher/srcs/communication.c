@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/16 15:47:19 by Mateo                                    */
+/*   Updated: 2019/01/16 17:55:56 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,29 +158,20 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 }
 static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 {
-	size_t buff_len;
 	//i controls the position in the batch, j controls the position in the buffer
-	size_t i, j;
-	char *buff;
+	size_t i, j, data_len;
+	char buff[META_INFO_LEN + (BATCH_SIZE * (MAX_TICKER_LEN + 3))];
 
-	for (size_t i = 0; i < tickers->n_tuples; i++)
-		buff_len += tickers->tick_len[i][VM_TICKERS_COL];
-	//the len includes the null at end just but the size before the ticker
-	buff_len = (buff_len + 3 * tickers->n_tuples + META_INFO_LEN);
-	if (!(buff = (char *)malloc(sizeof(char) * buff_len)))
-		{
-			dprintf(2, "Error: in malloc send_tickers\n");
-			exit(2);
-		}
 	//assign meta info (3 bytes)
 	buff[0] = 0x04;
-	*((unsigned short *)(buff + 1)) = buff_len - META_INFO_LEN;
 	i = 0;
 	j = META_INFO_LEN;
-	buff[j++] = tickers->n_tuples;
+	buff[j++] = BATCH_SIZE;
 	add_from_queue(&i, &j, BATCH_SIZE, buff, tickers);
 	add_from_list(&i, &j, BATCH_SIZE, buff, tickers);
-	send(cli->client_fd, buff, buff_len, 0x0);
+	data_len = (j + 1) - META_INFO_LEN;
+	*((unsigned short *)(buff + 1)) = data_len;
+	send(cli->client_fd, buff, data_len, 0x0);
 }
 
 void decode_data(const char *buff, const ssize_t readed,

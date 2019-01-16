@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:47:53 by Mateo                                    */
-/*   Updated: 2019/01/09 16:04:58 by Mateo                                    */
+/*   Updated: 2019/01/16 17:24:50 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,6 +26,7 @@
 #define MAX_CONNECTIONS 3
 #define BUFF_SIZE 1024 //buffer must be 4 or more
 #define META_INFO_LEN 3 // 1 byte for code 2 bytes for length
+#define MAX_TICKER_LEN 256
 #define SIZE_32 4
 
 typedef struct queue_s

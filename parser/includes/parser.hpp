@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/15 17:08:05 by Mateo                                    //
+//   Updated: 2019/01/16 19:18:04 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -23,7 +23,16 @@
 #include <vector>
 #include <nlohmann/json.hpp>
 
+#define CIQINACTIVE_RTETRIES 4
+#define INVALID_IDNENTIFIER_RETRIES 1
+#define REFRESH_RETRIES 1
+#define ERR_CIQ "#CIQINACTIVE"
+#define ERR_INV "(Invalid Identifier)"
+#define ERR_REF "#REFRESH"
+#define ERROR_ARR {ERR_CIQ, ERR_INV, ERR_REF, ""}
+#define RETRY_ARR {CIQINACTIVE_RTETRIES, INVALID_IDNENTIFIER_RETRIES, REFRESH_RETRIES, -1}
 
+#define BATCH_SIZE 10
 #define META_INFO_LEN 3
 #define PORT 8080
 #define ADDR INADDR_ANY
@@ -40,6 +49,13 @@
 #define F_END 0x4
 #define F_END_PARSING 0x8
 
+typedef struct queue_s
+{
+	uint32_t start; //inclusive
+	uint32_t end; //exclusive
+	struct queue_s *next;
+} queue_t;
+
 typedef struct ticker_json_s
 {
 	size_t len;
@@ -53,8 +69,8 @@ private:
 	int sockfd;
 	char **init_bloom_tick(unsigned short *n_tickers, const char *buff, const int readed, unsigned int *buff_pos);
 
-		public:
-		 client();
+public:
+	client();
 	void init();
 	char **get_tickers(unsigned short *n_tickers);
 	unsigned char get_watching_directories();
@@ -86,7 +102,8 @@ private:
 
 	bool issdigit(char *str);
 	void handle_fatal_error(const std::string message);
-	void parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter, ticker_json_t *j_year);
+	void handle_cell_error(size_t n_tuples, std::string value);
+		void parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter, ticker_json_t *j_year);
 	void init_ticker(const xlsxioreadersheet sheet, ticker_json_t *j);
 	void init_date(const xlsxioreadersheet sheet, ticker_json_t *j);
 

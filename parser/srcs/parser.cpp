@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/11 19:54:30 by Mateo                                    //
+//   Updated: 2019/01/16 19:18:43 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -146,6 +146,46 @@ void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_qua
 			else
 				(j->j[cell_j - 1])[current_field] = cell_value;
 			cell_j++;
+		}
+}
+
+void excel_parser::handle_cell_error(size_t n_tuples, std::string value)
+{
+	static int *ticker_retries = new int[n_tuples]();
+	static queue_t queue = {0, 0, NULL};
+	std::string error_arr[] = ERROR_ARR;
+	char retry_arr[] = RETRY_ARR;
+	unsigned char i = 0;
+	int error_mask = 0xFF;
+
+	while(retry_arr[i] >= 0)
+		{
+			if ((((error_mask << (8 * i)) & ticker_retries[this->ticker_index]) >> (8 * i)) >=
+					retry_arr[i])
+				{
+					//reboot vm;
+				}
+		}
+	i = 0;
+	while (!error_arr[i].empty())
+		{
+			if (value == error_arr[i])
+				{
+					if (!queue.end)
+						{
+							queue.start = ticker_index;
+							queue.end = ticker_index + 1;
+						}
+					else if ((ticker_index - queue.end) == 0 &&
+									 (queue.end - queue.start) < BATCH_SIZE)
+							queue.end++;
+					else
+						{
+							//send queue;
+							queue.start = ticker_index;
+							queue.end = ticker_index + 1;
+						}
+				}
 		}
 }
 

@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/15 14:44:23 by Mateo                                    //
+//   Updated: 2019/01/16 19:21:22 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -18,14 +18,12 @@ int main()
 	unsigned short n_tickers;
 	char **bloom_tick;
 	// unsigned char n_vm;
-	int *ticker_retries;
 	// dir_watcher *watcher;
 
 	cli.init();
 	bloom_tick = cli.get_tickers(&n_tickers);
 	for (int i = 0; i < n_tickers; i++)
 		std::cout << bloom_tick[i] << "\n";
-	ticker_retries = new int[n_tickers]();
 	(void)ticker_retries;
 	// printf("Get %lu tickers from launcher\n", n_tickers);
 	// n_vm = cli.get_watching_directories();
