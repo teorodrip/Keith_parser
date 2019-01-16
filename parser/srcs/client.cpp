@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 09:56:44 by Mateo                                    //
-//   Updated: 2019/01/10 16:56:13 by Mateo                                    //
+//   Updated: 2019/01/15 16:59:54 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -32,21 +32,88 @@ void client::init()
 			std::cerr << "Error: connecting the server\n";
 			exit(EXIT_FAILURE);
 		}
+	if (fcntl(sockfd, F_SETFL, O_NONBLOCK) < 0)
+		{
+			std::cerr << "Error: setting fd flag\n";
+			exit(EXIT_FAILURE);
+		}
 }
 
-size_t client::get_number_tickers()
+char **client::init_bloom_tick(unsigned short *n_tickers, const char *buff, const int readed, unsigned int *buff_pos)
+{
+	char **bloom_tick;
+
+	if (readed < META_INFO_LEN || buff[0] != 0x03)
+		{
+			std::cerr << "Error: recived bad code from server\n";
+			exit(EXIT_FAILURE);
+		}
+	*n_tickers = *((unsigned short *)(buff + 1));
+	bloom_tick = new char *[*n_tickers];
+	(*buff_pos) += META_INFO_LEN;
+	return(bloom_tick);
+}
+
+char **client::get_tickers(unsigned short *n_tickers)
 {
 	uint8_t request[META_INFO_LEN + 1] = {0x03, 0x00, 0x00, 0x00};
-	size_t data_size;
+	char buff[BUFF_SIZE];
+	unsigned short len;
+	unsigned int i, buff_pos;
 	int readed;
+	char **bloom_tick;
+	unsigned char rem;
+	bool finish = true;
 
-	if (send(sockfd, request, META_INFO_LEN + 1, 0) < 0 ||
-			(readed = read(sockfd, &data_size, sizeof(size_t))) != sizeof(size_t))
+	if (send(sockfd, request, META_INFO_LEN + 1, 0) < 0)
 		{
 			std::cerr << "Error: obtaining tickers from launcher\n";
 			exit(EXIT_FAILURE);
 		}
-	return (data_size);
+	bloom_tick = NULL;
+	i = 0;
+	buff_pos = 0;
+	len = 0;
+	rem = 0;
+	while (finish)
+		{
+			if ((readed = read(sockfd, buff, BUFF_SIZE)) > 0)
+				{
+					buff_pos = 0;
+					if (!bloom_tick)
+						bloom_tick = init_bloom_tick(n_tickers, buff, readed, &buff_pos);
+					while (buff_pos < BUFF_SIZE && buff_pos < (unsigned int)readed)
+						{
+							if (rem)
+								{
+									memcpy(bloom_tick[i] + (len - rem), buff, rem);
+									buff_pos += rem;
+									i++;
+									rem = 0;
+								}
+							else
+								{
+									len = buff[buff_pos++]; //this len includes null at end
+									bloom_tick[i] = new char[len];
+									if (len <= (readed - buff_pos))
+										{
+											memcpy(bloom_tick[i], buff + buff_pos, len);
+											buff_pos += len;
+											i++;
+										}
+									else
+										{
+											memcpy(bloom_tick[i], buff + buff_pos, readed - buff_pos);
+											rem = len - (readed - buff_pos);
+											buff_pos += (readed - buff_pos);
+										}
+								}
+						}
+					if (i == *n_tickers && !rem)
+						finish = false;
+				}
+		}
+	return (bloom_tick);
 }
 
 unsigned char client::get_watching_directories()

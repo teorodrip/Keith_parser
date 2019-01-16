@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/10 17:13:17 by Mateo                                    */
+/*   Updated: 2019/01/15 18:47:55 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,8 +66,75 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 	return (data_size - i);
 }
 
+static void send_tickers_parser(const client_t *cli, tickers_t *tickers)
+{
+	unsigned char len = 0;
+	size_t buff_len = 0;
+	size_t j;
+	char *buff;
+	char *value;
+
+	for (int i = 0; i < tickers->n_tuples; i++)
+		buff_len += tickers->tick_len[i][PARSER_TICKERS_COL];
+	buff_len = (buff_len + 2 * tickers->n_tuples + META_INFO_LEN);
+	if (!(buff = (char *)malloc(sizeof(char) * buff_len)))
+		{
+			dprintf(2, "Error: in malloc send_tickers\n");
+			exit(2);
+		}
+	//assign meta info (3 bytes)
+	buff[0] = 0x03;
+	*((unsigned short *)(buff + 1)) = tickers->n_tuples;
+	j = META_INFO_LEN;
+	for (int i = 0; i < tickers->n_tuples; i++)
+		{
+			value = PQgetvalue(tickers->res, i, PARSER_TICKERS_COL);
+			len = tickers->tick_len[i][PARSER_TICKERS_COL];
+			buff[j++] = len;
+			memcpy(buff + j, value, len);
+			j += len;
+		}
+	send(cli->client_fd, buff, buff_len, 0x0);
+}
+
+static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
+{
+	unsigned short n_tuples = PQntuples(res);
+	size_t len = 0;
+	size_t buff_len;
+	size_t j;
+	char *buff;
+	char *value;
+
+	n_tuples = 3;
+	for (int i = 0; i < n_tuples; i++)
+		len += strlen(PQgetvalue(res, i, PARSER_TICKERS_COL));
+	buff_len = (len + 3 * n_tuples + META_INFO_LEN + 1);
+	if (!(buff = (char *)malloc(sizeof(char) * buff_len)))
+		{
+			dprintf(2, "Error: in malloc send_tickers\n");
+			exit(2);
+		}
+	//assign meta info (3 bytes)
+	buff[0] = 0x04;
+	*((unsigned short *)(buff + 1)) = buff_len - META_INFO_LEN;
+	j = META_INFO_LEN;
+	buff[j++] = n_tuples;
+	for (int i = 0; i < n_tuples; i++)
+		{
+			value = PQgetvalue(res, i, PARSER_TICKERS_COL);
+			len = strlen(value) + 1;
+			*((unsigned short *)(buff + j)) = (unsigned short)i;
+			j += 2;
+			buff[j++] = (unsigned char)len;
+			memcpy(buff + j, value, len);
+			j += len;
+		}
+	send(cli->client_fd, buff, buff_len, 0x0);
+}
+
 void decode_data(const char *buff, const ssize_t readed,
-								 const client_t *cli, const tickers_t *tickers)
+								 const client_t *cli, tickers_t *tickers)
 {
 	static uint8_t conn_code = 0xff;
 	static uint16_t data_size = 0;
@@ -89,6 +156,7 @@ void decode_data(const char *buff, const ssize_t readed,
 		{
 		case 0x00:
 			printf("Machine started well\n");
+			send_tickers_vm(cli, tickers);
 			conn_code = 0xFF;
 			break;
 		case 0x01:
@@ -101,7 +169,7 @@ void decode_data(const char *buff, const ssize_t readed,
 			break;
 		case 0x03:
 			printf("Sending list of all tickers\n");
-			send(cli->client_fd, &(tickers->n_tuples), sizeof(size_t), 0);
+			send_tickers_parser(cli, tickers);
 			conn_code = 0xFF;
 			break;
 		case 0x04:
@@ -119,6 +187,10 @@ void decode_data(const char *buff, const ssize_t readed,
 				conn_code = 0xFF;
 			break;
 		case 0x07:
+			printf("Sending vm directory\n");
+			conn_code = 0xFF;
+			break;
+		case 0x08:
 			printf("Sending watching directories\n");
 			unsigned char n = VM_NB;
 			send(cli->client_fd, &(n), sizeof(unsigned char), 0);
