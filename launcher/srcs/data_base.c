@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/03 11:05:18 by Mateo                                    */
-/*   Updated: 2019/01/15 18:45:38 by Mateo                                    */
+/*   Updated: 2019/01/16 10:27:59 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -162,6 +162,6 @@ void write_tickers(PGresult *res, char *path)
 void clean_tickers(tickers_t *tickers)
 {
 	for (uint32_t i = 0; i < tickers->n_tuples; i++)
-		free(tickers->tickers[i]);
-	free(tickers->tickers);
+		free(tickers->tick_len[i]);
+	free(tickers->tick_len);
 }

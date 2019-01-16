@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 14:21:03 by Mateo                                    */
-/*   Updated: 2019/01/15 18:34:06 by Mateo                                    */
+/*   Updated: 2019/01/16 12:15:47 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,19 +48,17 @@ int main()
 	server_t srv;
 	client_t *cli_head;
 	/* tickers_t tickers; */
-	int pos;
 	tickers_t tickers;
 	/* unsigned char machines_running; */
 
+	tickers = (tickers_t){0, 0, 0, NULL, NULL, NULL};
 	conn = connect_db(DB_NAME, DB_USER, DB_PASS, DB_HOST);
 	get_data(conn, SQL_ALL_REQ, &tickers);
 	PQfinish(conn);
 	init_server(&srv);
 	cli_head = NULL;
-	queue_g = NULL;
-	pos = 0;
 	/* machines_running = 0; */
-	while (pos < tickers.n_tuples || queue_g != NULL)// || machines_running)//c++ parsing
+	while (tickers.pos < tickers.n_tuples || tickers.queue != NULL)// || machines_running)//c++ parsing
 		{
 			accept_client(&srv, &cli_head);
 			read_clients(&cli_head, &tickers);

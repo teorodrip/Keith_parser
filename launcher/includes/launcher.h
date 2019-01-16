@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/15 18:35:39 by Mateo                                    */
+/*   Updated: 2019/01/16 12:02:58 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,8 @@
 #define DB_TIMOUT "10" //Max
 #define SQL_ALL_REQ "SELECT ticker_bbg, ticker_capiq FROM main_v2.static_inv_universe WHERE ticker_capiq IS NOT NULL AND ticker_capiq != '' ORDER BY is_invested DESC LIMIT 50"
 /* #define SQL_ALL_REQ "SELECT A.tickers FROM data.test_gregoire_ticker_list A\nLEFT JOIN (\nSELECT DISTINCT ON (ticker) ticker, event_time\nFROM data.test_gregoire_growth_margin\nORDER BY ticker, event_time DESC\n) B on A.tickers = B.ticker\nORDER BY event_time ASC NULLS FIRST" */
-#define PARSER_TICKERS_COL 1
+#define PARSER_TICKERS_COL 0
+#define VM_TICKERS_COL 1
 
 #define NAME_MAX 100
 #define BUF_LEN (10 * (sizeof(struct inotify_event) + NAME_MAX + 1))
@@ -60,7 +61,9 @@ typedef struct tickers_s
 {
 	size_t n_tuples;
 	size_t n_cols;
+	size_t pos;
 	unsigned char **tick_len;
+	queue_t *queue;
 	PGresult *res;
 } tickers_t;
 
@@ -71,7 +74,6 @@ unsigned char start_success[VM_NB];
 #define EXTERN extern
 #endif
 
-EXTERN queue_t *queue_g;
 EXTERN char **virtual_machines;
 
 void *launcher(void *arg);
