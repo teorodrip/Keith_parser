@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/16 19:18:04 by Mateo                                    //
+//   Updated: 2019/01/17 16:14:06 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -32,6 +32,8 @@
 #define ERROR_ARR {ERR_CIQ, ERR_INV, ERR_REF, ""}
 #define RETRY_ARR {CIQINACTIVE_RTETRIES, INVALID_IDNENTIFIER_RETRIES, REFRESH_RETRIES, -1}
 
+#define NAME_MAX 100
+#define INOTIFY_BUFF (sizeof(struct inotify_event) + NAME_MAX + 1)
 #define BATCH_SIZE 10
 #define META_INFO_LEN 3
 #define PORT 8080
@@ -76,6 +78,7 @@ public:
 	unsigned char get_watching_directories();
 	void signal_shutdown(const unsigned char vm_nb);
 	void signal_reboot(const unsigned char vm_nb);
+	void send_queue(const queue_t queue);
 };
 
 class dir_watcher
@@ -84,34 +87,37 @@ private:
 	std::string path;
 	int fd_notify;
 
-	void manage_event(struct inotify_event *event);
 public:
 	dir_watcher();
-	dir_watcher(const unsigned char machine_id);
-	void watch_directory();
+	dir_watcher(const std::string path);
+	char *watch_directory(char *name);
 };
 
-class excel_parser
+class excel_parser : public client
 {
 private:
 	std::string file_path;
 	xlsxioreader book;
 	std::vector<std::string> sheet_names;
 	size_t ticker_index;
+	unsigned char vm_id;
 	int flags;
 
 	bool issdigit(char *str);
 	void handle_fatal_error(const std::string message);
 	void handle_cell_error(size_t n_tuples, std::string value);
-		void parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter, ticker_json_t *j_year);
+	void parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter, ticker_json_t *j_year);
 	void init_ticker(const xlsxioreadersheet sheet, ticker_json_t *j);
 	void init_date(const xlsxioreadersheet sheet, ticker_json_t *j);
 
 public:
 	excel_parser();
-	excel_parser(std::string file_path);
-	void init();
+	void init(const std::string file_path);
 	void parse_book();
+	void set_file_path(const std::string file_path);
+	void clear_flags();
+	void close_book();
+	void clear_all();
 };
 
 #endif

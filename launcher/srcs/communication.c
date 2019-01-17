@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/16 17:55:56 by Mateo                                    */
+/*   Updated: 2019/01/17 16:20:34 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,6 +174,12 @@ static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 	send(cli->client_fd, buff, data_len, 0x0);
 }
 
+static void send_vm_id(const client_t *cli)
+{
+	char buff[] = {0x08, 0x01, 0x00, cli->id};
+	send(cli->client_fd, buff, META_INFO_LEN + 1,0x0);
+}
+
 void decode_data(const char *buff, const ssize_t readed,
 								 const client_t *cli, tickers_t *tickers)
 {
@@ -197,6 +203,7 @@ void decode_data(const char *buff, const ssize_t readed,
 		{
 		case 0x00:
 			printf("Machine started well\n");
+			send_vm_id(cli);
 			send_tickers_vm(cli, tickers);
 			conn_code = 0xFF;
 			break;
@@ -215,6 +222,7 @@ void decode_data(const char *buff, const ssize_t readed,
 			break;
 		case 0x04:
 			printf("Sending batch of tickers\n");
+			send_tickers_vm(cli, tickers);
 			conn_code = 0xFF;
 			break;
 		case 0x05:
@@ -228,13 +236,13 @@ void decode_data(const char *buff, const ssize_t readed,
 				conn_code = 0xFF;
 			break;
 		case 0x07:
-			printf("Sending vm directory\n");
-			conn_code = 0xFF;
-			break;
-		case 0x08:
 			printf("Sending watching directories\n");
 			unsigned char n = VM_NB;
 			send(cli->client_fd, &(n), sizeof(unsigned char), 0);
+			conn_code = 0xFF;
+			break;
+		case 0x08:
+			printf("Sending vm directory\n");
 			conn_code = 0xFF;
 			break;
 		default:

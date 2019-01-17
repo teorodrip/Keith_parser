@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/16 19:21:22 by Mateo                                    //
+//   Updated: 2019/01/17 16:14:45 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -14,29 +14,33 @@
 
 int main()
 {
-	client cli= client();
+	excel_parser parser;
 	unsigned short n_tickers;
 	char **bloom_tick;
-	// unsigned char n_vm;
-	// dir_watcher *watcher;
+	unsigned char n_vm;
+	dir_watcher *watcher;
+	char file_to_parse[NAME_MAX];
 
-	cli.init();
-	bloom_tick = cli.get_tickers(&n_tickers);
-	for (int i = 0; i < n_tickers; i++)
-		std::cout << bloom_tick[i] << "\n";
-	(void)ticker_retries;
-	// printf("Get %lu tickers from launcher\n", n_tickers);
-	// n_vm = cli.get_watching_directories();
-	// printf("Get %u tickers from launcher\n", n_vm);
-	// watcher = new dir_watcher[n_vm];
-	// for (int i = 0; i < n_vm; i++)
-	// 	watcher[i] = dir_watcher(i);
-	// while(true)
-	// 	{
-	// 		for (int i = 0; i < n_vm; i++)
-	// 			watcher[i].watch_directory();
-	// 		usleep(100000);
-	// 	}
+	parser.client::init();
+	bloom_tick = parser.client::get_tickers(&n_tickers);
+	(void)bloom_tick;
+	printf("Got %u tickers from launcher\n", n_tickers);
+	n_vm = parser.client::get_watching_directories();
+	printf("Watching %d virtual machines\n", n_vm);
+	watcher = new dir_watcher[n_vm];
+	for (int i = 0; i < n_vm; i++)
+		watcher[i] = dir_watcher(DEFAULT_PATH + std::to_string(i) + "/");
+	while(true)
+		{
+			for (int i = 0; i < n_vm; i++)
+				{
+					while (watcher[i].watch_directory(file_to_parse))
+						{
+							printf("Parsing %s\n", file_to_parse);
+						}
+				}
+			usleep(100000);
+		}
 
 	// xlsxioreader book;
 	// xlsxioreadersheet sheet;

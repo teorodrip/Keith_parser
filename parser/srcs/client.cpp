@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 09:56:44 by Mateo                                    //
-//   Updated: 2019/01/15 16:59:54 by Mateo                                    //
+//   Updated: 2019/01/17 14:22:40 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -121,12 +121,12 @@ unsigned char client::get_watching_directories()
 	uint8_t request[META_INFO_LEN + 1] = {0x07, 0x00, 0x00, 0x00};
 	unsigned char vm_nb;
 
-	if (send(sockfd, request, META_INFO_LEN + 1, 0) < 0 ||
-			read(sockfd, &vm_nb, sizeof(unsigned char)) != sizeof(unsigned char))
+	if (send(sockfd, request, META_INFO_LEN + 1, 0) < 0)
 		{
-			std::cerr << "Error: obtaining tickers from launcher\n";
+			std::cerr << "Error: obtaining directories to watch\n";
 			exit(EXIT_FAILURE);
 		}
+	while (read(sockfd, &vm_nb, sizeof(unsigned char)) != sizeof(unsigned char));
 	return (vm_nb);
 }
 
@@ -149,4 +149,14 @@ void client::signal_reboot(const unsigned char vm_nb)
 			std::cerr << "Error: obtaining tickers from launcher\n";
 			exit(EXIT_FAILURE);
 		}
+}
+
+void client::send_queue(const queue_t queue)
+{
+	char buff[META_INFO_LEN + sizeof(queue_t)];
+
+	buff[0] = 0x06;
+	*((unsigned short *)(buff + 1)) = (unsigned short)sizeof(queue_t);
+	*((queue_t *)(buff + META_INFO_LEN)) = queue;
+	send(sockfd, buff, META_INFO_LEN + sizeof(queue_t), 0x0);
 }

@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 17:10:12 by Mateo                                    //
-//   Updated: 2019/01/11 14:19:36 by Mateo                                    //
+//   Updated: 2019/01/17 16:13:41 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -18,9 +18,9 @@ dir_watcher::dir_watcher()
 {
 }
 
-dir_watcher::dir_watcher(const unsigned char id)
+dir_watcher::dir_watcher(const std::string path)
 {
-	path = DEFAULT_PATH + std::to_string(id) + "/";
+	this->path = path;
   if ((fd_notify = inotify_init()) == -1)
   	{
   	  printf("Can not init inotify");
@@ -38,33 +38,32 @@ dir_watcher::dir_watcher(const unsigned char id)
   	}
 }
 
-void dir_watcher::watch_directory()
+char *dir_watcher::watch_directory(char *name)
 {
+	static unsigned int pos = 0;
+	static char buff[INOTIFY_BUFF];
 	int readed;
-	char buff[BUFF_SIZE * sizeof(struct inotify_event)];
-	char *buff_tmp;
 	struct inotify_event *event;
 
-	while ((readed = read(fd_notify, buff, BUFF_SIZE)) > 0)
+	if (pos >= sizeof(struct inotify_event))
 		{
-			for(buff_tmp = buff; buff_tmp < buff + readed;)
+			event = (struct inotify_event *)buff;
+			if (pos >= sizeof(struct inotify_event) + event->len)
 				{
-					event = (struct inotify_event *)buff_tmp;
-					manage_event(event);
-					buff_tmp += sizeof(struct inotify_event) + event->len;
+					strcpy(name, event->name);
+					pos -= sizeof(struct inotify_event) + event->len;
+					memcpy(buff, buff + sizeof(struct inotify_event) + event->len, pos);
+					return (name);
 				}
 		}
-
-}
-
-void dir_watcher::manage_event(struct inotify_event *event)
-{
-	if (event->len > 0)
+	if ((readed = read(fd_notify, buff + pos, INOTIFY_BUFF - pos)) > 0)
 		{
-			printf("Parsing %s\n", event->name);
-			//parse the sheet
-			excel_parser ex = excel_parser(this->path + event->name);
-			ex.init();
-			ex.parse_book();
+			event = (struct inotify_event *)buff;
+			strcpy(name, event->name);
+			pos = readed - (sizeof(inotify_event) + event->len);
+			memcpy(buff, buff + sizeof(inotify_event) + event->len, pos);
+			return(name);
 		}
+	else
+		return (NULL);
 }

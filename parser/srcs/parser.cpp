@@ -6,22 +6,19 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/16 19:18:43 by Mateo                                    //
+//   Updated: 2019/01/17 11:37:15 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
 #include "../includes/parser.hpp"
 #include <stdlib.h>
 
-excel_parser::excel_parser()
+excel_parser::excel_parser() : client()
 {
+	this->file_path = "";
 	this->flags = 0x0;
-}
-
-excel_parser::excel_parser(std::string file_path)
-{
-	this->file_path = file_path;
-	this->flags = 0x0;
+	this->ticker_index = 0;
+	this->vm_id = 0;
 }
 
 void excel_parser::handle_fatal_error(const std::string message)
@@ -43,8 +40,9 @@ bool excel_parser::issdigit(char *str)
 	return (true);
 }
 
-void excel_parser::init()
+void excel_parser::init(const std::string file_path)
 {
+	this->file_path = file_path;
 	if ((book = xlsxioread_open(file_path.c_str())) == NULL)
 		{
 			std::cerr << "Error opening: " << file_path << "\n";
@@ -164,6 +162,7 @@ void excel_parser::handle_cell_error(size_t n_tuples, std::string value)
 					retry_arr[i])
 				{
 					//reboot vm;
+					client::signal_reboot(this->vm_id);
 				}
 		}
 	i = 0;
@@ -178,10 +177,11 @@ void excel_parser::handle_cell_error(size_t n_tuples, std::string value)
 						}
 					else if ((ticker_index - queue.end) == 0 &&
 									 (queue.end - queue.start) < BATCH_SIZE)
-							queue.end++;
+						queue.end++;
 					else
 						{
 							//send queue;
+							client::send_queue(queue);
 							queue.start = ticker_index;
 							queue.end = ticker_index + 1;
 						}
@@ -223,4 +223,28 @@ void excel_parser::init_ticker(const xlsxioreadersheet sheet, ticker_json_t *j)
 		}
 	else
 		handle_fatal_error("In the format of the sheet while reading ticker");
+}
+
+
+void excel_parser::set_file_path(const std::string file_path)
+{
+	this->file_path = file_path;
+}
+
+void excel_parser::clear_flags()
+{
+	this->flags = 0x0;
+}
+
+void excel_parser::close_book()
+{
+	xlsxioread_close(this->book);
+}
+void excel_parser::clear_all()
+{
+	this->file_path = "";
+	xlsxioread_close(this->book);
+	std::vector<std::string>().swap(this->sheet_names);
+	this->ticker_index = 0;
+	this->flags = 0x0;
 }

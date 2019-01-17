@@ -17,4 +17,5 @@ request code (first byte):
 05 => VM has finished the batch
 06 => recive range of tickers to put in queue (size of 4 * 2 bytes or 2 uint32_t for start and end)
 07 => get directories of VM outputs
+08 => send vm id
 ff => NULL request code
