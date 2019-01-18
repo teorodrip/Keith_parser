@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/17 16:20:34 by Mateo                                    */
+/*   Updated: 2019/01/18 11:13:16 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,6 +158,7 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 }
 static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 {
+	printf("Sending batch of tickers\n");
 	//i controls the position in the batch, j controls the position in the buffer
 	size_t i, j, data_len;
 	char buff[META_INFO_LEN + (BATCH_SIZE * (MAX_TICKER_LEN + 3))];
@@ -221,12 +222,12 @@ void decode_data(const char *buff, const ssize_t readed,
 			conn_code = 0xFF;
 			break;
 		case 0x04:
-			printf("Sending batch of tickers\n");
-			send_tickers_vm(cli, tickers);
+			printf("Recived signal 0x04 this shall not happen\n");
 			conn_code = 0xFF;
 			break;
 		case 0x05:
 			printf("Machine has finished the batch\n");
+			send_tickers_vm(cli, tickers);
 			conn_code = 0xFF;
 			break;
 		case 0x06:

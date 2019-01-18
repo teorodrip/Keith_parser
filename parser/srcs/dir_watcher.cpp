@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 17:10:12 by Mateo                                    //
-//   Updated: 2019/01/17 16:13:41 by Mateo                                    //
+//   Updated: 2019/01/18 10:55:25 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -33,7 +33,7 @@ dir_watcher::dir_watcher(const std::string path)
 		}
   if (inotify_add_watch(fd_notify, path.c_str(), IN_CLOSE_WRITE) == -1)
   	{
-  	  printf("Can not add watcher");
+  	  dprintf(2, "Can not add watcher\nMay be %s does not exists?\n", path.c_str());
   	  exit(2);
   	}
 }

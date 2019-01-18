@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/17 16:14:06 by Mateo                                    //
+//   Updated: 2019/01/18 10:56:43 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -40,7 +40,8 @@
 #define ADDR INADDR_ANY
 #define BUFF_SIZE 1024 //buffer must be greater than the length of the max ticker
 #define FILE_NAME "./sheet2.xlsx"
-#define DEFAULT_PATH "./outputs_windows_"
+#define COMPUER_NAME "unchartech_2"
+#define DEFAULT_PATH "/home/" COMPUER_NAME "/vm_shared/outputs_windows_"
 
 //parser macros
 #define TICKER_START "Ticker/ID"
