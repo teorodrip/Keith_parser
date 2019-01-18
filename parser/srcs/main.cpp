@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/17 16:14:45 by Mateo                                    //
+//   Updated: 2019/01/18 17:41:54 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -20,6 +20,7 @@ int main()
 	unsigned char n_vm;
 	dir_watcher *watcher;
 	char file_to_parse[NAME_MAX];
+	std::string path_to_file;
 
 	parser.client::init();
 	bloom_tick = parser.client::get_tickers(&n_tickers);
@@ -37,6 +38,11 @@ int main()
 					while (watcher[i].watch_directory(file_to_parse))
 						{
 							printf("Parsing %s\n", file_to_parse);
+							path_to_file = DEFAULT_PATH + std::to_string(i) + "/" + file_to_parse;
+							parser.init(path_to_file);
+							parser.parse_book();
+							parser.clear_all();
+							return 1;
 						}
 				}
 			usleep(100000);

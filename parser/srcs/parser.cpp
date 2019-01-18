@@ -6,14 +6,14 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/17 11:37:15 by Mateo                                    //
+//   Updated: 2019/01/18 19:41:20 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
 #include "../includes/parser.hpp"
 #include <stdlib.h>
 
-excel_parser::excel_parser() : client()
+excel_parser::excel_parser() : client(), data_base()
 {
 	this->file_path = "";
 	this->flags = 0x0;
@@ -75,15 +75,19 @@ void excel_parser::parse_book()
 			if ((sheet = xlsxioread_sheet_open(book, sheet_name.c_str(),
 																				 XLSXIOREAD_SKIP_EMPTY_ROWS)) != NULL)
 				{
+					j_quarter = {0, NULL};
+					j_year = {0, NULL};
 					while (!(this->flags & F_END_PARSING) && xlsxioread_sheet_next_row(sheet))
 						{
 							parse_row(sheet, &j_quarter, &j_year);
 						}
 					xlsxioread_sheet_close(sheet);
 					//uplad jsnons here
-					delete(j_quarter.j);
-					delete(j_year.j);
+					data_base::upload_data(j_quarter);
+					delete[] j_quarter.j;
+					delete[] j_year.j;
 				}
+			break;
 		}
 }
 
@@ -112,16 +116,16 @@ void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_qua
 						{
 							this->flags |= F_HALF;
 							j = j_year;
-							init_date(sheet, j);
-							if (!xlsxioread_sheet_next_row(sheet)) //epty row after half ticker
+							if (!xlsxioread_sheet_next_row(sheet)) //go to empty row after half ticker
 								handle_fatal_error("In the format of the sheet after HALF_TICKER");
+							init_date(sheet, j);
 							continue;
 						}
-					else if (!strcmp(cell_value, HALF_TICKER) && (flags & F_START) &&
+					else if (!strcmp(cell_value, END_TICKER) && (flags & F_START) &&
 									 (flags & F_HALF) && !(flags & F_END))
 						{
 							this->flags = F_END;
-							if (!xlsxioread_sheet_next_row(sheet)) //epty row after end ticker
+							if (!xlsxioread_sheet_next_row(sheet) || !xlsxioread_sheet_next_row(sheet)) //go to empty row after end ticker
 								handle_fatal_error("In the format of the sheet after END_TICKER");
 							continue;
 						}
@@ -132,14 +136,14 @@ void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_qua
 									this->flags = F_END_PARSING;
 									break;
 								}
-							if (!xlsxioread_sheet_next_row(sheet) && !xlsxioread_sheet_next_row(sheet)) //jump empty row
+							if (!xlsxioread_sheet_next_row(sheet)) //jump empty row
 								handle_fatal_error("In the format of the sheet after END_TICKER");
 							continue;
 						}
 					else
 						current_field = cell_value;
 				}
-			else if (*cell_value == '\0')
+			else if (*cell_value == '\0' || (cell_j - 1) >= j->len)
 				break;
 			else
 				(j->j[cell_j - 1])[current_field] = cell_value;
@@ -204,7 +208,7 @@ void excel_parser::init_date(const xlsxioreadersheet sheet, ticker_json_t *j)
 		}
 	else
 		handle_fatal_error("In the format of the sheet while reading dates");
-	if (!xlsxioread_sheet_next_row(sheet)) //epty row after dates
+	if (!xlsxioread_sheet_next_row(sheet)) //row after dates
 		handle_fatal_error("In the format of the sheet while reading dates");
 }
 

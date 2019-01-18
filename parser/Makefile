@@ -6,7 +6,7 @@
 #    By: Mateo <teorodrip@protonmail.com>                                      #
 #                                                                              #
 #    Created: 2019/01/04 17:47:52 by Mateo                                     #
-#    Updated: 2019/01/10 19:09:27 by Mateo                                     #
+#    Updated: 2019/01/18 15:43:24 by Mateo                                     #
 #                                                                              #
 #******************************************************************************#
 
@@ -23,6 +23,7 @@ CC = g++
 FUNCS = client.cpp \
 		dir_watcher.cpp \
 		parser.cpp \
+		data_base.cpp \
 		main.cpp
 
 SRCS_DIR = srcs/

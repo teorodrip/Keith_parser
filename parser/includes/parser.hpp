@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/18 10:56:43 by Mateo                                    //
+//   Updated: 2019/01/18 19:38:49 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -65,6 +65,13 @@ typedef struct ticker_json_s
 	nlohmann::json *j;
 } ticker_json_t;
 
+class data_base
+{
+public:
+	data_base();
+	void upload_data(ticker_json_t data);
+};
+
 class client
 {
 private:
@@ -94,7 +101,7 @@ public:
 	char *watch_directory(char *name);
 };
 
-class excel_parser : public client
+class excel_parser : public client, public data_base
 {
 private:
 	std::string file_path;
