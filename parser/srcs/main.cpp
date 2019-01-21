@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/18 17:41:54 by Mateo                                    //
+//   Updated: 2019/01/21 19:19:45 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -15,17 +15,12 @@
 int main()
 {
 	excel_parser parser;
-	unsigned short n_tickers;
-	char **bloom_tick;
 	unsigned char n_vm;
 	dir_watcher *watcher;
 	char file_to_parse[NAME_MAX];
 	std::string path_to_file;
 
 	parser.client::init();
-	bloom_tick = parser.client::get_tickers(&n_tickers);
-	(void)bloom_tick;
-	printf("Got %u tickers from launcher\n", n_tickers);
 	n_vm = parser.client::get_watching_directories();
 	printf("Watching %d virtual machines\n", n_vm);
 	watcher = new dir_watcher[n_vm];

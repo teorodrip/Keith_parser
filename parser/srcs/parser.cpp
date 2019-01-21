@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/21 15:31:00 by Mateo                                    //
+//   Updated: 2019/01/21 19:21:40 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -15,10 +15,13 @@
 
 excel_parser::excel_parser() : client(), data_base()
 {
+  this->bloom_tickers = NULL;
   this->file_path = "";
   this->flags = 0x0;
   this->ticker_index = 0;
   this->vm_id = 0;
+  this->sheet_names = {};
+  this->dates = {};
 }
 
 void excel_parser::handle_fatal_error(const std::string message)
@@ -62,6 +65,9 @@ void excel_parser::init(const std::string file_path)
 	  std::cerr << "Error: listing the sheets\n";
 	  exit(EXIT_FAILURE);
 	}
+	this->bloom_tickers = client::get_tickers(&n_bloom_tickers);
+	printf("Got %d tickers\n", n_bloom_tickers);
+	data_base::connect_db(DB_NAME, DB_USER, DB_PASS, DB_HOST);
 }
 
 void excel_parser::parse_book()
@@ -69,7 +75,9 @@ void excel_parser::parse_book()
   xlsxioreadersheet sheet;
   ticker_json_t j_quarter;//before half ticker
   ticker_json_t j_year;//after half ticker
+  unsigned char sheet_counter;
 
+  sheet_counter = 0;
   for (std::string sheet_name : sheet_names)
 	{
 	  if ((sheet = xlsxioread_sheet_open(book, sheet_name.c_str(),
@@ -79,20 +87,19 @@ void excel_parser::parse_book()
 		  j_year = {0, NULL};
 		  while (!(this->flags & F_END_PARSING) && xlsxioread_sheet_next_row(sheet))
 			{
-			  parse_row(sheet, &j_quarter, &j_year);
+			  parse_row(sheet, &j_quarter, &j_year, sheet_counter);
 			}
 		  xlsxioread_sheet_close(sheet);
-		  //uplad jsnons here
-		  data_base::upload_data(j_quarter);
 		  delete[] j_quarter.j;
 		  delete[] j_year.j;
 		}
 	  break;
+	  sheet_counter++;
 	}
 }
 
 void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter,
-							 ticker_json_t *j_year)
+							 ticker_json_t *j_year, unsigned char sheet_counter)
 {
   ticker_json_t *j;
   size_t cell_j;
@@ -108,8 +115,9 @@ void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_qua
 		  if (!strcmp(cell_value, TICKER_START) && !(flags & F_START))
 			{
 			  this->flags = 0x0;
-			  jump_rows(sheet, 1); //next row contains index
 			  init_ticker(sheet);
+			  jump_rows(sheet, 1); //next row contains index
+			  init_index(sheet);
 			  jump_rows(sheet, 2); //jump company name and go to dates rows
 			  init_date(sheet, j);
 			  return; //continue parsing for next row
@@ -126,30 +134,42 @@ void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_qua
 		  else if (!strcmp(cell_value, END_TICKER) && (flags & F_START) &&
 				   (flags & F_HALF) && !(flags & F_END))
 			{
-			  this->flags = F_END; // not add the flag but set flags to end so the others are cleared
+			  // not add the flag but set flags to end so the others are cleared
+			  this->flags = F_END;
 			  jump_rows(sheet, 1); //jump empty row after end
-
-			  data_base::upload_data(*j_quarter);
+			  //upload to data base
+			  data_base::upload_ticker_period(ticker_name, dates[0],
+											  bloom_tickers[ticker_index],
+											  j->j->dump(),
+											  dates[sheet_counter],
+											  sheet_counter);
+			  this->dates.clear();
+			  data_base::finish_db();
 			  exit(1);
-
 			  return;
 			}
 		  else if (*cell_value == '\0')
 			{
 			  if (this->flags & F_END)
-				{
-				  this->flags = F_END_PARSING;
-				  break;
-				}
+				this->flags = F_END_PARSING;
 			  return; // if not ended parsing jump row
 			}
 		  else
-			current_field = cell_value;
+			{
+			  if (!strcmp(cell_value, FIL_DATE))
+				this->flags |= F_FIL_DATE;
+			  current_field = cell_value;
+			}
 		}
 	  else if (*cell_value == '\0' || (cell_j - 1) >= j->len)
 		break;
 	  else
 		(j->j[cell_j - 1])[current_field] = cell_value;
+	  if (this->flags & F_FIL_DATE)
+		{
+		  this->dates.push_back(cell_value);
+		  this->flags &= ~(F_FIL_DATE);
+		}
 	  cell_j++;
 	}
 }
@@ -204,11 +224,27 @@ void excel_parser::init_date(const xlsxioreadersheet sheet, ticker_json_t *j)
   j->len = (size_t)-1; //the first cell does not count
   delete[] j->j;
   while ((cell_value = xlsxioread_sheet_next_cell(sheet)) != NULL && *cell_value != '\0')
-	j->len++;
+	{
+	  if (this->dates.empty())
+		this->dates.push_back(cell_value);
+	  j->len++;
+	}
   j->j = new nlohmann::json[j->len];
 }
 
 void excel_parser::init_ticker(const xlsxioreadersheet sheet)
+{
+  char *cell_value;
+
+  //ticker must be in this line second cell
+  if ((cell_value = xlsxioread_sheet_next_cell(sheet)) &&
+	  *cell_value != '\0')
+	this->ticker_name = cell_value;
+  else
+	handle_fatal_error("In the format of the sheet while reading ticker");
+}
+
+void excel_parser::init_index(const xlsxioreadersheet sheet)
 {
   char *cell_value;
 
@@ -222,7 +258,6 @@ void excel_parser::init_ticker(const xlsxioreadersheet sheet)
   else
 	handle_fatal_error("In the format of the sheet while reading ticker");
 }
-
 
 void excel_parser::set_file_path(const std::string file_path)
 {

@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/21 15:15:17 by Mateo                                    //
+//   Updated: 2019/01/21 19:14:41 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -17,6 +17,7 @@
 #include <netinet/in.h>
 #include <xlsxio_read.h>
 #include <unistd.h>
+#include </usr/include/postgresql/libpq-fe.h>
 #include <string.h>
 #include <fcntl.h>
 #include <iostream>
@@ -44,13 +45,35 @@
 #define DEFAULT_PATH "/home/" COMPUER_NAME "/vm_shared/outputs_windows_"
 
 //parser macros
+#define SHEET_NB 4
 #define TICKER_START "Ticker/ID"
 #define HALF_TICKER "HALF_OF_TICKER"
 #define END_TICKER "END_OF_TICKER"
+#define FIL_DATE "Filing Date"
 #define F_START 0x1
 #define F_HALF 0x2
 #define F_END 0x4
 #define F_END_PARSING 0x8
+#define F_FIL_DATE 0x10
+
+//data base constants
+#define DB_NAME "pam_test"
+#define DB_USER "capiq_manager"
+#define DB_PASS "capiqunchartech"
+#define DB_HOST "192.168.27.122"
+#define TABLE_PATH "ciq.statements_standard"
+#define COL_BLOOM_TICKER "ticker_bbg"
+#define COL_PERIOD_DATE "period_date"
+#define COL_INC_FIL_DATE "income_filled_date"
+#define COL_BAL_FIL_DATE "balance_filled_date"
+#define COL_CASH_FIL_DATE "cashflow_filled_date"
+#define COL_CAPIQ_TICKER "ticker_capiq"
+#define COL_INC_STAT_SHEET "income_statement"
+#define COL_BAL_SHEET "balance_sheet"
+#define COL_CASH_SHEET "cash_flow"
+#define COL_KEY_SHEET "key_stats"
+#define COLS_DATES {COL_PERIOD_DATE, COL_INC_FIL_DATE, COL_BAL_FIL_DATE, COL_CASH_FIL_DATE}
+#define COLS_DATA {COL_INC_STAT_SHEET, COL_BAL_SHEET, COL_CASH_SHEET, COL_KEY_SHEET}
 
 typedef struct queue_s
 {
@@ -67,9 +90,21 @@ typedef struct ticker_json_s
 
 class data_base
 {
+private:
+  PGconn *conn;
 public:
   data_base();
-  void upload_data(ticker_json_t data);
+  void connect_db(const char *db_name,
+				  const char *db_user,
+				  const char *db_pass,
+				  const char *db_host);
+  void upload_ticker_period(std::string capiq_ticker,
+							std::string period_date,
+							std::string bloom_ticker,
+							std::string data,
+							std::string date,
+							unsigned char sheet_nb);
+  void finish_db();
 };
 
 class client
@@ -104,9 +139,13 @@ public:
 class excel_parser : public client, public data_base
 {
 private:
+  char **bloom_tickers;
+  unsigned short n_bloom_tickers;
   std::string file_path;
+  std::string ticker_name;
   xlsxioreader book;
   std::vector<std::string> sheet_names;
+  std::vector<std::string> dates;
   size_t ticker_index;
   unsigned char vm_id;
   int flags;
@@ -114,7 +153,8 @@ private:
   bool issdigit(char *str);
   void handle_fatal_error(const std::string message);
   void handle_cell_error(size_t n_tuples, std::string value);
-  void parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter, ticker_json_t *j_year);
+  void parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter, ticker_json_t *j_year, unsigned char sheet_counter);
+  void init_index(const xlsxioreadersheet sheet);
   void init_ticker(const xlsxioreadersheet sheet);
   void init_date(const xlsxioreadersheet sheet, ticker_json_t *j);
   bool jump_rows(const xlsxioreadersheet sheet, const size_t cuant);
