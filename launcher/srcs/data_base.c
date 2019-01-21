@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/03 11:05:18 by Mateo                                    */
-/*   Updated: 2019/01/17 17:31:58 by Mateo                                    */
+/*   Updated: 2019/01/21 10:21:17 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,8 +72,9 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 			PQfinish(conn);
 			exit(2);
 		}
-	tickers->n_tuples = (size_t)PQntuples(tickers->res);
+	/* tickers->n_tuples = (size_t)PQntuples(tickers->res); */
 	tickers->n_cols = (size_t)PQnfields(tickers->res);
+ 	tickers->n_tuples = 10;
 	if ( !(tickers->tick_len =
 				 (unsigned char **)malloc(sizeof(unsigned char *) * tickers->n_tuples)))
 		{
