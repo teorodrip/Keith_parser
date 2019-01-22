@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/22 18:19:05 by Mateo                                    //
+//   Updated: 2019/01/22 18:35:28 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -418,4 +418,9 @@ void excel_parser::clear_bloom_tickers()
 void excel_parser::clear_ticker_retries()
 {
 	delete[] ticker_retries;
+}
+
+void excel_parser::clear_period_dates()
+{
+	delete[] period_dates;
 }

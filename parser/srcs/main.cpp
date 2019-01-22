@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/22 15:28:38 by Mateo                                    //
+//   Updated: 2019/01/22 18:36:04 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -38,6 +38,7 @@ int main()
 							parser.parse_book();
 							parser.clear_bloom_tickers();
 							parser.clear_ticker_retries();
+							parser.clear_period_dates();
 							parser.data_base::finish_db();
 							delete[] watcher;
 							parser.clear_all();
