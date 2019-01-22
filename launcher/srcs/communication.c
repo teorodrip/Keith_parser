@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/18 11:13:16 by Mateo                                    */
+/*   Updated: 2019/01/22 16:07:51 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -231,7 +231,7 @@ void decode_data(const char *buff, const ssize_t readed,
 			conn_code = 0xFF;
 			break;
 		case 0x06:
-			printf("Machine has finished the batch\n");
+			printf("Recieved queue of tickers\n");
 			data_size = add_to_queue(buff + offset, readed - offset, data_size, offset, tickers);
 			if (!data_size)
 				conn_code = 0xFF;

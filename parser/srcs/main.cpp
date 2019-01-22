@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/21 19:19:45 by Mateo                                    //
+//   Updated: 2019/01/22 15:28:38 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -20,7 +20,7 @@ int main()
 	char file_to_parse[NAME_MAX];
 	std::string path_to_file;
 
-	parser.client::init();
+	parser.init();
 	n_vm = parser.client::get_watching_directories();
 	printf("Watching %d virtual machines\n", n_vm);
 	watcher = new dir_watcher[n_vm];
@@ -34,8 +34,12 @@ int main()
 						{
 							printf("Parsing %s\n", file_to_parse);
 							path_to_file = DEFAULT_PATH + std::to_string(i) + "/" + file_to_parse;
-							parser.init(path_to_file);
+							parser.load_book(path_to_file);
 							parser.parse_book();
+							parser.clear_bloom_tickers();
+							parser.clear_ticker_retries();
+							parser.data_base::finish_db();
+							delete[] watcher;
 							parser.clear_all();
 							return 1;
 						}

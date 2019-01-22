@@ -6,7 +6,7 @@
 #    By: Mateo <teorodrip@protonmail.com>                                      #
 #                                                                              #
 #    Created: 2019/01/04 17:47:52 by Mateo                                     #
-#    Updated: 2019/01/18 15:43:24 by Mateo                                     #
+#    Updated: 2019/01/22 09:49:19 by Mateo                                     #
 #                                                                              #
 #******************************************************************************#
 
@@ -16,7 +16,7 @@ SHELL = /bin/bash
 
 NAME = parser
 
-C_FLAGS = -Wall -Werror -Wextra -g -lxlsxio_read
+C_FLAGS = -Wall -Werror -Wextra -g -lxlsxio_read -lpq
 
 CC = g++
 

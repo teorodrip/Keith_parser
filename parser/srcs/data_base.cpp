@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/18 15:27:33 by Mateo                                    //
-//   Updated: 2019/01/21 19:11:51 by Mateo                                    //
+//   Updated: 2019/01/22 15:14:27 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -64,7 +64,7 @@ void data_base::connect_db(const char *db_name,
 	}
 }
 
-void data_base::upload_ticker_period(std::string capiq_ticker,
+bool data_base::upload_ticker_period(std::string capiq_ticker,
 									 std::string period_date,
 									 std::string bloom_ticker,
 									 std::string data,
@@ -80,32 +80,32 @@ void data_base::upload_ticker_period(std::string capiq_ticker,
 	{
 	  request = "INSERT INTO " TABLE_PATH " VALUES(\'" + bloom_ticker +
 		"\',\'" + period_date + "\',NULL,NULL,NULL,\'" + capiq_ticker +
-		"\',\'" + data + "\',NULL,NULL,NULL);";
+		"\',NULL,NULL,NULL,\'" + data + "\');";
 	}
   else if (sheet_nb < SHEET_NB)
 	{
 	  request = "UPDATE " TABLE_PATH " SET " + date_columns[sheet_nb] +
 		" = \'" + date + "\', " + data_columns[sheet_nb] + " = \'" +
 		data + "\' WHERE " COL_BLOOM_TICKER " = \'" + bloom_ticker +
-		"\', " COL_PERIOD_DATE " = \'" + period_date + "\';";
+		"\' AND " COL_PERIOD_DATE " = \'" + period_date + "\';";
 	}
   res = PQexec(conn, request.c_str());
   if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 	  std::cerr << "Error: executing the following request:\n" + request + "\n";
 	  PQclear(res);
-	  PQfinish(conn);
-	  exit(EXIT_FAILURE);
+		return (true);
 	}
-  res = PQexec(conn, "COMMIT");
-  if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-	  std::cerr << "Error: executing the following request:\n" + request + "\n";
-	  PQclear(res);
-	  PQfinish(conn);
-	  exit(EXIT_FAILURE);
-	}
+  // res = PQexec(conn, "COMMIT");
+  // if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	// {
+	//   std::cerr << "Error: executing the following request:\nCOMMIT\n";
+	//   PQclear(res);
+	//   PQfinish(conn);
+	//   exit(EXIT_FAILURE);
+	// }
   PQclear(res);
+	return (false);
 }
 
 void data_base::finish_db()
