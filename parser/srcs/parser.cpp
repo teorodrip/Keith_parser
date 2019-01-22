@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/22 18:35:28 by Mateo                                    //
+//   Updated: 2019/01/22 19:02:39 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -396,6 +396,9 @@ void excel_parser::clear_all()
   xlsxioread_close(this->book);
   this->ticker_index = 0;
   this->flags = 0x0;
+	this->ticker_name = "";
+	this->fil_date = "";
+	this->current_sheet = 0;
 }
 
 bool excel_parser::jump_rows(const xlsxioreadersheet sheet, const size_t cuant)
