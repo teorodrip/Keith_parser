@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/23 16:16:14 by Mateo                                    //
+//   Updated: 2019/01/23 18:09:27 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -20,7 +20,8 @@ int main()
 	char file_to_parse[NAME_MAX];
 	std::string file_string;
 	std::string path_to_file;
-	std::regex file_format (".*\\.xlsx");
+	// std::regex file_format (".*\\.xlsx");
+	std::regex file_format ("^(([^~])+).*\\.xlsx");
 
 	parser.init();
 	n_vm = parser.client::get_watching_directories() + 1;

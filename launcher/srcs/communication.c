@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/23 16:21:49 by Mateo                                    */
+/*   Updated: 2019/01/23 18:50:53 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -290,6 +290,8 @@ void decode_data(const char *buff,
 					else
 						*flags |= F_END;
 				}
+			else
+				*flags &= ~(F_END);
 			send(cli->client_fd, &res, sizeof(unsigned char), 0);
 			conn_code = 0xFF;
 			break;
