@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/16 12:02:58 by Mateo                                    */
+/*   Updated: 2019/01/23 15:49:55 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,11 +21,18 @@
 #include <pthread.h>
 #include </usr/include/postgresql/libpq-fe.h>
 #include "./server.h"
+#include "./protocol.h"
 
-#define VM_NB 2
+#define VM_NB 1
 #define VM_NAME_1 "windows_1"
 #define VM_NAME_2 "windows_2"
-#define VM_ARR {VM_NAME_1, VM_NAME_2}//, VM_NAME_2}
+#define VM_ARR {VM_NAME_1}//, VM_NAME_2}//, VM_NAME_2}
+
+//flags must use a intger of 64 bits (61 vm can be used at same time)
+#define N_FLAGS 3
+#define F_PARS_RUN 0x8000000000000000
+#define F_END 0x4000000000000000
+#define F_END_2 0x2000000000000000
 
 #define WRITE_BUFF 1024
 #define BATCH_SIZE 10
@@ -70,18 +77,16 @@ typedef struct tickers_s
 pthread_mutex_t mutex[VM_NB];
 unsigned char start_success[VM_NB];
 
-#ifndef EXTERN
-#define EXTERN extern
-#endif
-
-EXTERN char **virtual_machines;
-
 void *launcher(void *arg);
 void get_data(PGconn *conn, char *request, tickers_t *tickers);
 void clean_tickers(tickers_t *tickers);
-void read_clients(client_t **head, tickers_t *tickers);
-void decode_data(const char *buff, const ssize_t readed,
-								 const client_t *cli, tickers_t *tickers);
+void read_clients(client_t **head, tickers_t *tickers, uint64_t *flags);
+void decode_data(const char *buff,
+								 const ssize_t readed,
+								 client_t *cli_head,
+								 client_t *cli,
+								 tickers_t *tickers,
+								 uint64_t *flags);
 PGconn *connect_db(const char *db_name,
 									 const char *db_user,
 									 const char *db_pass,

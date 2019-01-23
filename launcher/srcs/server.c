@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:45:39 by Mateo                                    */
-/*   Updated: 2019/01/15 18:36:11 by Mateo                                    */
+/*   Updated: 2019/01/23 14:44:27 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ static void assign_client(const int fd, client_t *new_cli, client_t **cli_head)
 	client_t *tmp_prev;
 
 	new_cli->client_fd = fd;
+	new_cli->is_vm = 0;
 	tmp_prev = *cli_head;
 	if (!tmp_prev)
 		{
@@ -134,7 +135,7 @@ void disconnect_client(client_t *prev, client_t **cli, client_t **head)
 
 }
 
-void read_clients(client_t **head, tickers_t *tickers)
+void read_clients(client_t **head, tickers_t *tickers, uint64_t *flags)
 {
 	client_t *cli;
 	client_t *prev;
@@ -147,7 +148,7 @@ void read_clients(client_t **head, tickers_t *tickers)
 		{
 			while ((readed = read(cli->client_fd, buff, BUFF_SIZE)) > 0)
 				{
-					decode_data(buff, readed, cli, tickers);
+					decode_data(buff, readed, *head, cli, tickers, flags);
 				}
 			if (readed == 0 || (readed == -1 && (errno != EAGAIN && errno != EWOULDBLOCK)))
 				{

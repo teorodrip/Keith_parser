@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/09 09:56:44 by Mateo                                    //
-//   Updated: 2019/01/17 14:22:40 by Mateo                                    //
+//   Updated: 2019/01/23 13:33:38 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -159,4 +159,40 @@ void client::send_queue(const queue_t queue)
 	*((unsigned short *)(buff + 1)) = (unsigned short)sizeof(queue_t);
 	*((queue_t *)(buff + META_INFO_LEN)) = queue;
 	send(sockfd, buff, META_INFO_LEN + sizeof(queue_t), 0x0);
+}
+
+void client::signal_parsing()
+{
+	char request[META_INFO_LEN + 1] = {SIG_PARS_RUN, 0x0, 0x0, 0x0};
+
+	if (send(sockfd, request, META_INFO_LEN + 1, 0) < 0)
+		{
+			std::cerr << "Error: Sending SIG_PARS_RUN to server\n";
+			exit(EXIT_FAILURE);
+		}
+}
+
+void client::signal_end_parsing()
+{
+	char request[META_INFO_LEN + 1] = {SIG_PARS_NO_RUN, 0x0, 0x0, 0x0};
+
+	if (send(sockfd, request, META_INFO_LEN + 1, 0) < 0)
+		{
+			std::cerr << "Error: Sending SIG_PARS_NO_RUN to server\n";
+			exit(EXIT_FAILURE);
+		}
+}
+
+unsigned char client::check_end()
+{
+	char request[META_INFO_LEN + 1] = {SIG_END, 0x0, 0x0, 0x0};
+	unsigned char res;
+
+	if (send(sockfd, request, META_INFO_LEN + 1, 0) < 0)
+		{
+			std::cerr << "Error: Sending SIG_END to server\n";
+			exit(EXIT_FAILURE);
+		}
+	while (read(sockfd, &res, sizeof(unsigned char)) != sizeof(unsigned char));
+	return (res);
 }

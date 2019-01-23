@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 10:47:53 by Mateo                                    */
-/*   Updated: 2019/01/16 17:24:50 by Mateo                                    */
+/*   Updated: 2019/01/23 14:39:45 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ typedef struct 	client_s
 {
 	int client_fd;
 	unsigned char id;
-	char *name;
+	unsigned char is_vm;
 	struct client_s *next;
 }								client_t;
 

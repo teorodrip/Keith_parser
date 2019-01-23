@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/22 19:02:39 by Mateo                                    //
+//   Updated: 2019/01/23 10:46:47 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -25,6 +25,7 @@ excel_parser::excel_parser() : client(), data_base()
   this->flags = 0x0;
   this->ticker_index = 0;
   this->vm_id = 0;
+	this->queue = {0, 0, NULL};
 }
 
 void excel_parser::handle_fatal_error(const std::string message)
@@ -129,6 +130,11 @@ void excel_parser::parse_book()
 			this->current_sheet++;
 			if (this->flags & F_FATAL_ERROR)
 				break;
+		}
+	if (queue.end)
+		{
+			client::send_queue(queue);
+			queue = {0, 0, NULL};
 		}
 }
 
@@ -248,7 +254,6 @@ void excel_parser::mark_cell_error(std::string cell_value)
 
 bool excel_parser::handle_cell_error(std::string value)
 {
-  static queue_t queue = {0, 0, NULL};
   std::string error_arr[] = ERROR_ARR;
   char retry_arr[] = RETRY_ARR;
   unsigned char i = 0;
@@ -373,11 +378,6 @@ void excel_parser::init_index(const xlsxioreadersheet sheet)
   else
 		handle_fatal_error("In the format of the sheet while reading ticker");
 	free(cell_value);
-}
-
-void excel_parser::set_file_path(const std::string file_path)
-{
-  this->file_path = file_path;
 }
 
 void excel_parser::clear_flags()

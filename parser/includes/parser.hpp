@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/22 18:35:07 by Mateo                                    //
+//   Updated: 2019/01/23 16:05:44 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -23,6 +23,8 @@
 #include <iostream>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include <regex>
+#include "../../launcher/includes/protocol.h"
 
 #define CIQINACTIVE_RTETRIES 4
 #define INVALID_IDNENTIFIER_RETRIES 1
@@ -131,6 +133,9 @@ public:
   void signal_shutdown(const unsigned char vm_nb);
   void signal_reboot(const unsigned char vm_nb);
   void send_queue(const queue_t queue);
+	void signal_parsing();
+	void signal_end_parsing();
+	unsigned char check_end();
 };
 
 class dir_watcher
@@ -160,6 +165,7 @@ private:
   std::string sheet_names[SHEET_NB];
   size_t ticker_index;
   unsigned char vm_id;
+	queue_t queue;
   int flags;
 
   bool issdigit(char *str);
@@ -178,7 +184,6 @@ public:
 	void init();
   void load_book(const std::string file_path);
   void parse_book();
-  void set_file_path(const std::string file_path);
   void clear_flags();
   void close_book();
   void clear_all();

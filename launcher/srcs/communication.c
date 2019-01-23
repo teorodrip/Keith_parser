@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/22 16:07:51 by Mateo                                    */
+/*   Updated: 2019/01/23 16:21:49 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,6 +158,8 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 }
 static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 {
+	if (tickers->pos >= tickers->n_tuples && tickers->queue == NULL)
+		return;
 	printf("Sending batch of tickers\n");
 	//i controls the position in the batch, j controls the position in the buffer
 	size_t i, j, data_len;
@@ -177,16 +179,21 @@ static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 
 static void send_vm_id(const client_t *cli)
 {
-	char buff[] = {0x08, 0x01, 0x00, cli->id};
+	char buff[] = {SIG_VM_SEND_ID, 0x01, 0x00, cli->id};
 	send(cli->client_fd, buff, META_INFO_LEN + 1,0x0);
 }
 
-void decode_data(const char *buff, const ssize_t readed,
-								 const client_t *cli, tickers_t *tickers)
+void decode_data(const char *buff,
+								 const ssize_t readed,
+								 client_t *cli_head,
+								 client_t *cli,
+								 tickers_t *tickers,
+								 uint64_t *flags)
 {
 	static uint8_t conn_code = 0xff;
 	static uint16_t data_size = 0;
 	unsigned char offset;
+	unsigned char res;
 
 	/* write(1, buff, readed); */
 	/* write(1, "\n", 1); */
@@ -197,13 +204,14 @@ void decode_data(const char *buff, const ssize_t readed,
 				return;
 			conn_code = *((uint8_t *)buff);
 			data_size = *((uint16_t *)(buff + 1));
-			printf("Readed code: %x (%u bytes)\n", conn_code, data_size);
 			offset = 3;
 		}
 	switch (conn_code)
 		{
 		case 0x00:
 			printf("Machine started well\n");
+			(*flags) |= (0x1 << cli->id);
+			cli->is_vm = 1;
 			send_vm_id(cli);
 			send_tickers_vm(cli, tickers);
 			conn_code = 0xFF;
@@ -227,23 +235,62 @@ void decode_data(const char *buff, const ssize_t readed,
 			break;
 		case 0x05:
 			printf("Machine has finished the batch\n");
-			send_tickers_vm(cli, tickers);
+			if (tickers->pos < tickers->n_tuples ||
+					tickers->queue != NULL)
+				send_tickers_vm(cli, tickers);
+			else
+				(*flags) &= ~(0x1 << cli->id);
 			conn_code = 0xFF;
 			break;
 		case 0x06:
 			printf("Recieved queue of tickers\n");
 			data_size = add_to_queue(buff + offset, readed - offset, data_size, offset, tickers);
 			if (!data_size)
-				conn_code = 0xFF;
+				{
+					while (cli_head)
+						{
+							if (cli_head->is_vm && !(*flags & (0x1 << cli_head->id)))
+								send_tickers_vm(cli_head, tickers);
+							cli_head = cli_head->next;
+						}
+					conn_code = 0xFF;
+				}
 			break;
 		case 0x07:
 			printf("Sending watching directories\n");
-			unsigned char n = VM_NB;
-			send(cli->client_fd, &(n), sizeof(unsigned char), 0);
+			res = VM_NB;
+			send(cli->client_fd, &(res), sizeof(unsigned char), 0);
 			conn_code = 0xFF;
 			break;
 		case 0x08:
-			printf("Sending vm directory\n");
+			printf("Received SIG_SEND_VM_ID this shall not happen\n");
+			conn_code = 0xFF;
+			break;
+		case SIG_PARS_RUN:
+			*flags |= F_PARS_RUN;
+			conn_code = 0xFF;
+			break;
+		case SIG_PARS_NO_RUN:
+			*flags &= ~(F_PARS_RUN);
+			conn_code = 0xFF;
+			break;
+		case SIG_END:
+			res = 0x1;
+			if (tickers->pos >= tickers->n_tuples &&
+					tickers->queue == NULL &&
+					!(*flags & F_PARS_RUN) &&
+					!(*flags << N_FLAGS))
+				{
+					if (*flags & F_END)
+						{
+							printf("Ending the program\n");
+							*flags |= F_END_2;
+							res = 0x0;
+						}
+					else
+						*flags |= F_END;
+				}
+			send(cli->client_fd, &res, sizeof(unsigned char), 0);
 			conn_code = 0xFF;
 			break;
 		default:
