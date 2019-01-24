@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/23 18:50:53 by Mateo                                    */
+/*   Updated: 2019/01/24 12:08:59 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 		{
 			if (!(tmp  = (queue_t *)malloc(sizeof(queue_t))))
 				exit(2);
-			*tmp = *((queue_t *)leftover_val);
+			*tmp = *((queue_t *)buff);
 			tmp->next = tickers->queue;
 			tickers->queue = tmp;
 			i += sizeof(queue_t);
@@ -104,7 +104,7 @@ static void add_from_list(size_t *i, size_t *j, size_t batch, char *buff, ticker
 	char *value;
 	unsigned char tick_len;
 
-	while (*i < batch)
+	while (tickers->pos < tickers->n_tuples && *i < batch)
 		{
 			value = PQgetvalue(tickers->res, tickers->pos, VM_TICKERS_COL);
 			tick_len = tickers->tick_len[tickers->pos][VM_TICKERS_COL];
@@ -132,8 +132,7 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 			queue_siz = (tmp->end - tmp->start);
 			if ((batch - *i) <= queue_siz)
 				{
-					for ( ; tmp->start < tmp->end;
-								tmp->start++)
+					while(tmp->start < tmp->end)
 						{
 							value = PQgetvalue(tickers->res, tmp->start, VM_TICKERS_COL);
 							tick_len = tickers->tick_len[tmp->start][VM_TICKERS_COL];
@@ -143,6 +142,7 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 							memcpy(buff + *j, value, tick_len);
 							(*j) += tick_len;
 							(*i)++;
+							(tmp->start)++;
 						}
 					if (prev)
 						prev->next = tmp->next;

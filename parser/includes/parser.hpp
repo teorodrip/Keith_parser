@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/23 18:14:07 by Mateo                                    //
+//   Updated: 2019/01/24 11:01:33 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -43,7 +43,7 @@
 #define ADDR INADDR_ANY
 #define BUFF_SIZE 1024 //buffer must be greater than the length of the max ticker
 #define FILE_NAME "./sheet2.xlsx"
-#define COMPUER_NAME "mateo"
+#define COMPUER_NAME "unchartech_2"
 #define DEFAULT_PATH "/home/" COMPUER_NAME "/vm_shared/outputs_windows_"
 
 //parser macros
