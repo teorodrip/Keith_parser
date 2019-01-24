@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/03 11:05:18 by Mateo                                    */
-/*   Updated: 2019/01/21 10:21:17 by Mateo                                    */
+/*   Updated: 2019/01/24 18:57:29 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ PGconn *connect_db(const char *db_name,
 {
 	PGconn *conn;
 
-	printf("Connecting to: %s (%s)\n", db_name, db_host);
+	printf(F_LOG("Connecting to: %s (%s)\n"), db_name, db_host);
 	conn = PQsetdbLogin(db_host, NULL, NULL, NULL, db_name, db_user, db_pass);
 	switch(PQstatus(conn))
 		{
@@ -72,9 +72,8 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 			PQfinish(conn);
 			exit(2);
 		}
-	/* tickers->n_tuples = (size_t)PQntuples(tickers->res); */
+	tickers->n_tuples = (size_t)PQntuples(tickers->res);
 	tickers->n_cols = (size_t)PQnfields(tickers->res);
- 	tickers->n_tuples = 10;
 	if ( !(tickers->tick_len =
 				 (unsigned char **)malloc(sizeof(unsigned char *) * tickers->n_tuples)))
 		{
@@ -93,72 +92,6 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 				tickers->tick_len[i][j] = strlen(PQgetvalue(tickers->res, i, j)) + 1;//count the null at end
 		}
 }
-
-/* void write_tickers(PGresult *res, char *path) */
-/* { */
-/* 	int fd; */
-/* 	char buff[WRITE_BUFF]; */
-/* 	char *ticker; */
-/* 	char file_path[NAME_MAX]; */
-/* 	int 	n_tuples; */
-/* 	int i; */
-/* 	size_t batch_counter; */
-/* 	size_t file_counter; */
-/* 	size_t ticker_len; */
-/* 	size_t buff_pos; */
-
-/* 	buff_pos = 0; */
-/* 	i = 0; */
-/* 	ticker = PQgetvalue(res, i, 0); */
-/* 	n_tuples = PQntuples(res); */
-/* 	file_counter = 0; */
-/* 	batch_counter = 0; */
-/* 	sprintf(file_path, "%stickers_%lu.dat", path, file_counter); */
-/* 	if ((fd = open(file_path, O_TRUNC | O_WRONLY | O_CREAT, 0777)) < 0) */
-/* 		{ */
-/* 			fprintf(stderr, "Error opening the file: %s", file_path); */
-/* 			exit(2); */
-/* 		} */
-/* 	while (i < n_tuples) */
-/* 		{ */
-/* 			ticker_len = strlen(ticker); */
-/* 			if ((buff_pos + 1 + ticker_len) <= WRITE_BUFF)//1 for \n */
-/* 				{ */
-/* 					strncpy(buff + buff_pos, ticker, ticker_len); */
-/* 					buff_pos += ticker_len; */
-/* 					strncpy(buff + buff_pos++, "\n", 1); */
-/* 					if (++batch_counter == BATCH_SIZE) */
-/* 						{ */
-/* 							write(fd, buff, buff_pos); */
-/* 							close(fd); */
-/* 							batch_counter = 0; */
-/* 							buff_pos = 0; */
-/* 							memset(buff, 0, WRITE_BUFF); */
-/* 							sprintf(file_path, "%stickers_%lu.dat", path, ++file_counter); */
-/* 							if ((fd = open(file_path, O_TRUNC | O_WRONLY | O_CREAT, 0777)) < 0) */
-/* 								{ */
-/* 									fprintf(stderr, "Error opening the file: %s", file_path); */
-/* 									exit(2); */
-/* 								} */
-/* 						} */
-/* 					if (++i < n_tuples) */
-/* 						{ */
-/* 							ticker = PQgetvalue(res, i, 0); */
-/* 						} */
-/* 					else */
-/* 						write(fd, buff, buff_pos); */
-/* 				} */
-/* 			else */
-/* 				{ */
-/* 					strncpy(buff + buff_pos, ticker, WRITE_BUFF - buff_pos); */
-/* 					ticker += WRITE_BUFF - buff_pos; */
-/* 					write(fd, buff, WRITE_BUFF); */
-/* 					buff_pos = 0; */
-/* 					memset(buff, 0, WRITE_BUFF); */
-/* 				} */
-/* 		} */
-/* 	close(fd); */
-/* } */
 
 void clean_tickers(tickers_t *tickers)
 {

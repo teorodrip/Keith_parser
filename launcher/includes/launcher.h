@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/23 15:49:55 by Mateo                                    */
+/*   Updated: 2019/01/24 18:53:42 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,7 @@
 #include </usr/include/postgresql/libpq-fe.h>
 #include "./server.h"
 #include "./protocol.h"
+#include "./logger.h"
 
 #define VM_NB 1
 #define VM_NAME_1 "windows_1"

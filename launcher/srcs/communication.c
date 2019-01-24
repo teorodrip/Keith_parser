@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/24 12:08:59 by Mateo                                    */
+/*   Updated: 2019/01/24 17:39:21 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,7 +130,7 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 	while (*i < batch && tmp)
 		{
 			queue_siz = (tmp->end - tmp->start);
-			if ((batch - *i) <= queue_siz)
+			if (queue_siz <= (batch - *i))
 				{
 					while(tmp->start < tmp->end)
 						{
@@ -152,8 +152,11 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 					tmp = tmp->next;
 					free(for_free);
 				}
-			prev = tmp;
-			tmp = tmp->next;
+			else
+				{
+					prev = tmp;
+					tmp = tmp->next;
+				}
 		}
 }
 static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
@@ -162,7 +165,7 @@ static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 		return;
 	printf("Sending batch of tickers\n");
 	//i controls the position in the batch, j controls the position in the buffer
-	size_t i, j, data_len;
+	size_t i, j;
 	char buff[META_INFO_LEN + (BATCH_SIZE * (MAX_TICKER_LEN + 3))];
 
 	//assign meta info (3 bytes)
@@ -172,9 +175,8 @@ static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 	buff[j++] = BATCH_SIZE;
 	add_from_queue(&i, &j, BATCH_SIZE, buff, tickers);
 	add_from_list(&i, &j, BATCH_SIZE, buff, tickers);
-	data_len = (j + 1) - META_INFO_LEN;
-	*((unsigned short *)(buff + 1)) = data_len;
-	send(cli->client_fd, buff, data_len, 0x0);
+	*((unsigned short *)(buff + 1)) = j - META_INFO_LEN;
+	send(cli->client_fd, buff, j, 0x0);
 }
 
 static void send_vm_id(const client_t *cli)

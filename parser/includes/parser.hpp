@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/24 11:01:33 by Mateo                                    //
+//   Updated: 2019/01/24 17:14:12 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -156,6 +156,7 @@ private:
   char **bloom_tickers;
 	int *ticker_retries;
 	std::string *period_dates;
+	bool *tickers_in_queue;
   unsigned short n_bloom_tickers;
   std::string file_path;
   std::string ticker_name;

@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/23 10:46:47 by Mateo                                    //
+//   Updated: 2019/01/24 18:15:18 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -54,6 +54,7 @@ void excel_parser::init()
 	printf("Got %d tickers\n", n_bloom_tickers);
 	ticker_retries = new int[this->n_bloom_tickers]();
 	this->period_dates = new std::string[this->n_bloom_tickers];
+	this->tickers_in_queue = new bool[this->n_bloom_tickers];
 	data_base::connect_db(DB_NAME, DB_USER, DB_PASS, DB_HOST);
 }
 
@@ -105,6 +106,7 @@ void excel_parser::parse_book()
   ticker_json_t j_quarter;//before half ticker
   ticker_json_t j_year;//after half ticker
 
+	std::fill(tickers_in_queue, tickers_in_queue + n_bloom_tickers, false);
 	this->current_sheet = 0;
   for (std::string sheet_name : sheet_names)
 		{
@@ -159,6 +161,7 @@ void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_qua
 				{
 					if (!strcmp(cell_value, END_TICKER))
 						{
+							//upload ticker if no error
 							if (!(this->flags & F_ERROR_IN_TICKER) &&
 									!this->period_dates[this->ticker_index].empty() &&
 									((this->current_sheet && !this->fil_date.empty()) || !this->current_sheet))
@@ -201,6 +204,8 @@ void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_qua
 							init_index(sheet);
 							jump_rows(sheet, 2); //jump company name and go to dates rows
 							init_date(sheet, j);
+							if (!(this->flags & F_ERROR_IN_TICKER) && tickers_in_queue[ticker_index])
+								this->flags |= F_ERROR_IN_TICKER;
 							break; //continue parsing for next row
 						}
 					else if (!strcmp(cell_value, HALF_TICKER))
@@ -236,7 +241,10 @@ void excel_parser::parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_qua
 					(j->j[cell_j - 1])[current_field] = cell_value;
 					if (this->flags & F_FIL_DATE)
 						{
-							this->fil_date = parse_excel_date(std::stoi(cell_value));
+							if (issdigit(cell_value))
+								this->fil_date = parse_excel_date(std::stoi(cell_value));
+							else
+								this->fil_date = "";//treat this as error?
 							this->flags &= ~(F_FIL_DATE);
 						}
 				}
@@ -250,6 +258,7 @@ void excel_parser::mark_cell_error(std::string cell_value)
 {
 	std::cerr << "Find error relative to: " + cell_value + "\n";
 	this->flags |= F_ERROR_IN_TICKER;
+	tickers_in_queue[this->ticker_index] = true;
 }
 
 bool excel_parser::handle_cell_error(std::string value)
@@ -356,11 +365,15 @@ void excel_parser::init_ticker(const xlsxioreadersheet sheet)
   char *cell_value;
 
   //ticker must be in this line second cell
-  if ((cell_value = xlsxioread_sheet_next_cell(sheet)) &&
-			*cell_value != '\0')
-		this->ticker_name = cell_value;
+  if ((cell_value = xlsxioread_sheet_next_cell(sheet)))
+		{
+			if (*cell_value == '\0')
+				this->flags |= F_END_PARSING;
+			else
+				this->ticker_name = cell_value;
+		}
   else
-		handle_fatal_error("In the format of the sheet while reading ticker");
+		handle_fatal_error("In the format of the sheet while reading ticker1");
 	free(cell_value);
 }
 
@@ -373,10 +386,12 @@ void excel_parser::init_index(const xlsxioreadersheet sheet)
 			this->issdigit(cell_value))
 		{
 			this->ticker_index = (size_t)std::stol(cell_value);
+			if (ticker_index >= n_bloom_tickers)
+				handle_fatal_error("Ticker index not correct");
 			this->flags |= F_START;
 		}
   else
-		handle_fatal_error("In the format of the sheet while reading ticker");
+		handle_fatal_error("In the format of the sheet while reading ticker2");
 	free(cell_value);
 }
 
