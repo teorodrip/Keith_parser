@@ -6,6 +6,12 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/24 18:36:58 by Mateo                                    */
-/*   Updated: 2019/01/24 18:37:28 by Mateo                                    */
+/*   Updated: 2019/01/25 10:07:13 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
+
+
+
+void log_fatal_error(char *error)
+{
+}
