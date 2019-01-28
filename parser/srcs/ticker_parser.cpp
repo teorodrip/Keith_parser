@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/25 14:37:34 by Mateo                                    //
-//   Updated: 2019/01/25 18:53:02 by Mateo                                    //
+//   Updated: 2019/01/28 11:03:56 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -45,7 +45,16 @@ unsigned char ticker_parser::parse_ticker(const xlsxioreadersheet *sheets, const
 								{
 									if (!strcmp(cell_value, END_TICKER))
 										{
-											//TODO continue here
+											//last sheet
+											if (i == len - 1)
+												{
+													if (!(flags & F_ERROR_IN_TICKER))
+														{
+															//upload
+														}
+												}
+											flags |= F_END_TICKER;
+											break;
 										}
 								}
 						}

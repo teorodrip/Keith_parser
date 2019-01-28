@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/25 11:31:34 by Mateo                                    //
-//   Updated: 2019/01/25 17:35:22 by Mateo                                    //
+//   Updated: 2019/01/28 13:12:23 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -14,12 +14,13 @@
 
 excel_reader::excel_reader()
 {
-
+	book = NULL;
+	sheet_nb = 0;
 }
 
-bool excel_reader::load_book(const std::string file_path,
-														 const std::regex *sh_exceptions,
-														 const size_t regex_siz)
+xlsxioreader excel_reader::load_book(const std::string file_path,
+																		 const std::regex *sh_exceptions,
+																		 const size_t regex_siz)
 {
 	xlsxioreadersheetlist sheet_list;
 	char *sheet_name;
@@ -28,13 +29,13 @@ bool excel_reader::load_book(const std::string file_path,
 	if ((book = xlsxioread_open(file_path.c_str())) == NULL)
 		{
 			fprintf(stderr, F_ERROR("Opening %s"), file_path.c_str());
-			return(false);
+			return(NULL);
 		}
 	if ((sheet_list = xlsxioread_sheetlist_open(book)) == NULL)
 		{
 			fprintf(stderr, F_ERROR("Listing book sheets"));
 			xlsxioread_close(book);
-			return(false);
+			return(NULL);
 		}
 	while ((sheet_name = (char *)xlsxioread_sheetlist_next(sheet_list)) != NULL)
 		{
@@ -48,43 +49,56 @@ bool excel_reader::load_book(const std::string file_path,
 						}
 				}
 			if (!regex_matched)
-				sheet_names.push_back(sheet_name);
+				{
+					sheet_names.push_back(sheet_name);
+					sheet_nb++;
+				}
 			free(sheet_name);
 		}
 	xlsxioread_sheetlist_close(sheet_list);
-	return (true);
+	return (book);
 }
 
-bool excel_reader::parse_book(error_handler *err)
+std::vector<sheet_t> load_sheets(const std::regex *sheet_marks,
+																	 const size_t regex_siz)
 {
-	xlsxioreadersheet *sheets;
-	unsigned char parser_status;
-	ticker_parser p;
-	//open sheets
-	sheets = new xlsxioreadersheet[sheet_names.size()];
-	for (size_t i = 0; i != sheet_names.size(); i++)
-		{
-			if ((sheets[i] = xlsxioread_sheet_open(book, sheet_names[i].c_str(),
-																						 XLSXIOREAD_SKIP_EMPTY_ROWS)) == NULL)
-				{
-					fprintf(stderr, F_ERROR("Opening sheet %s"), sheet_names[i].c_str());
-					delete[] sheets;
-					return (false);
-				}
-		}
-	//parse each ticker of the sheet
-	do
-		{
-			//parsing function
-			parser_status = p.parse_ticker(sheets, sheet_names.size());
-			if (parser_status == F_FATAL_ERROR)
-				{
-					fprintf(stderr, F_ERROR("While parsing tickers"));
-					delete[] sheets;
-					return (false);
-				}
-		}
-	while ((parser_status != F_END_PARSING));
-	delete[] sheets;
-	return (true);
+
 }
+
+void excel_reader::close_book()
+{
+	xlsxioread_close(book);
+}
+// bool excel_reader::parse_book(error_handler *err)
+// {
+// 	xlsxioreadersheet *sheets;
+// 	unsigned char parser_status;
+// 	ticker_parser p;
+// 	//open sheets
+// 	sheets = new xlsxioreadersheet[sheet_names.size()];
+// 	for (size_t i = 0; i != sheet_names.size(); i++)
+// 		{
+// 			if ((sheets[i] = xlsxioread_sheet_open(book, sheet_names[i].c_str(),
+// 																						 XLSXIOREAD_SKIP_EMPTY_ROWS)) == NULL)
+// 				{
+// 					fprintf(stderr, F_ERROR("Opening sheet %s"), sheet_names[i].c_str());
+// 					delete[] sheets;
+// 					return (false);
+// 				}
+// 		}
+// 	//parse each ticker of the sheet
+// 	do
+// 		{
+// 			//parsing function
+// 			parser_status = p.parse_ticker(sheets, sheet_names.size());
+// 			if (parser_status == F_FATAL_ERROR)
+// 				{
+// 					fprintf(stderr, F_ERROR("While parsing tickers"));
+// 					delete[] sheets;
+// 					return (false);
+// 				}
+// 		}
+// 	while ((parser_status != F_END_PARSING));
+// 	delete[] sheets;
+// 	return (true);
+// }

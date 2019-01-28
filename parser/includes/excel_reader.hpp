@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/25 11:32:03 by Mateo                                    //
-//   Updated: 2019/01/25 15:55:32 by Mateo                                    //
+//   Updated: 2019/01/28 12:26:08 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -22,6 +22,14 @@
 #include "../../launcher/includes/logger.h"
 #include "../includes/ticker_parser.hpp"
 #include "../includes/error_handler.hpp"
+
+typedef size_t sheet_coord_t[2];
+
+typedef struct sheet_s
+{
+	std::vector<sheet_coord_t> marks;
+	std::vector<std::vector<std::string>> sheet;
+} sheet_t;
 
 class excel_reader
 {
@@ -54,18 +62,23 @@ private:
 protected:
   xlsxioreader book;
 	std::vector<std::string> sheet_names;
+	size_t sheet_nb;
+	std::vector<sheet_t> sheets;
 
 public:
   excel_reader();
 	// void init();
-  bool load_book(const std::string file_path,
-								 const std::regex *sh_exceptions,
-								 const size_t regex_siz);
-	bool parse_book(error_handler *err);
-  // void parse_book();
-  // void clear_flags();
-  // void close_book();
-  // void clear_all();
+  xlsxioreader load_book(const std::string file_path,
+												 const std::regex *sheet_exceptions,
+												 const size_t regex_siz);
+	std::vector<sheet_t> load_sheets(const std::regex *sheet_marks,
+																	 const size_t regex_siz);
+	std::string get_value(const size_t sheet_pos, const size_t row, const size_t col);
+	void close_book();
+	// void parse_book();
+	// void clear_flags();
+	// void close_book();
+	// void clear_all();
 	// void clear_bloom_tickers();
 	// void clear_ticker_retries();
 	// void clear_period_dates();
