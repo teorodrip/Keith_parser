@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/30 17:48:38 by Mateo                                    //
+//   Updated: 2019/01/30 18:53:51 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -224,6 +224,7 @@ void excel_parser::parse_tickers()
 						}
 					sheets[k].end_ticker_iter++;
 					sheets[k].ticker_id_iter++;
+					sheets[k].fil_date_iter += 2;
 					if (sheets[k].end_ticker_iter >= BATCH_SIZE)
 						sheets[k].flags |= FS_END_OF_SHEET;
 					if ((k == SHEET_NB - 1) && (sheets[k].flags & FS_END_OF_SHEET))

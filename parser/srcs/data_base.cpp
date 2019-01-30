@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/18 15:27:33 by Mateo                                    //
-//   Updated: 2019/01/30 17:55:03 by Mateo                                    //
+//   Updated: 2019/01/30 19:21:15 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -104,40 +104,60 @@ static std::string parse_excel_date(std::string date_str)
 
 bool data_base::upload_ticker(ticker_json_t *tick, std::string bloom_ticker, sheet_t *sheets)
 {
-  // PGresult *res;
+  PGresult *res;
   std::string request_base;
-  std::string request_body;
+  std::string request_body_year = "";
+	size_t pos;
 
 	request_base = "INSERT INTO " TABLE_PATH " VALUES";
-	request_body = "(\'" + bloom_ticker +
-		"\',\'" + parse_excel_date(tick->dates_year->at(1)) +
-		"\',\'" + parse_excel_date(sheets[1].sheet[sheets[1].fil_date[0].i][sheets[1].fil_date[0].j + 1]) +
-		"\',\'" + parse_excel_date(sheets[2].sheet[sheets[2].fil_date[0].i][sheets[2].fil_date[0].j + 1]) +
-		"\',\'" + parse_excel_date(sheets[3].sheet[sheets[3].fil_date[0].i][sheets[3].fil_date[0].j + 1]) +
-		"\',\'" + tick->ticker_capiq +
-		"\',\'" + tick->j_year[1][0].dump() +
-		"\',\'" + tick->j_year[2][0].dump() +
-		"\',\'" + tick->j_year[3][0].dump() +
-		"\',\'" + tick->j_year[0][0].dump() +
-		"\');";
-
-	printf("Exec:\n%s", (request_base + request_body).c_str());
-  // res = PQexec(conn, request.c_str());
+	for (size_t i = 1; i < tick->dates_year->size(); i++)
+		{
+			if (i > 1)
+				request_body_year += ",";
+			request_body_year += "(\'" + bloom_ticker +
+				"\',\'" + parse_excel_date(tick->dates_year->at(i)) + "\',";
+			//fil date 1
+			pos = sheets[1].fil_date[sheets[1].fil_date_iter - 2].i;
+			if (i < sheets[1].sheet[pos].size())
+				request_body_year += "\'" + parse_excel_date(sheets[1].sheet[pos][i]) + "\',";
+			else
+				request_body_year += "NULL,";
+			//fill date 2
+			pos = sheets[2].fil_date[sheets[2].fil_date_iter - 2].i;
+			if (i < sheets[2].sheet[pos].size())
+				request_body_year += "\'" + parse_excel_date(sheets[2].sheet[pos][i]) + "\',";
+			else
+				request_body_year += "NULL,";
+			//fill date 3
+			pos = sheets[3].fil_date[sheets[3].fil_date_iter - 2].i;
+			if (i < sheets[3].sheet[pos].size())
+				request_body_year += "\'" + parse_excel_date(sheets[3].sheet[pos][i]) + "\',";
+			else
+				request_body_year += "NULL,";
+			request_body_year += "\'" + tick->ticker_capiq +
+				"\',\'" + tick->j_year[1][i - 1].dump() +
+				"\',\'" + tick->j_year[2][i - 1].dump() +
+				"\',\'" + tick->j_year[3][i - 1].dump() +
+				"\',\'" + tick->j_year[0][i - 1].dump() +
+				"\')";
+		}
+	request_base += request_body_year;
+  res = PQexec(conn, request_base.c_str());
+  if (PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			std::cout << "Error: executing the following request:\n" + request_base + "\n";
+			PQclear(res);
+			return (true);
+		}
+  // res = PQexec(conn, "COMMIT");
   // if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	// 	{
-	// 		std::cerr << "Error: executing the following request:\n" + request + "\n";
-	// 		PQclear(res);
-	// 		return (true);
-	// 	}
-  // // res = PQexec(conn, "COMMIT");
-  // // if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	// // {
-	// //   std::cerr << "Error: executing the following request:\nCOMMIT\n";
-	// //   PQclear(res);
-	// //   PQfinish(conn);
-	// //   exit(EXIT_FAILURE);
-	// // }
-  // PQclear(res);
+	// {
+	//   std::cerr << "Error: executing the following request:\nCOMMIT\n";
+	//   PQclear(res);
+	//   PQfinish(conn);
+	//   exit(EXIT_FAILURE);
+	// }
+  PQclear(res);
 	return (false);
 }
 
