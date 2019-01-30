@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/23 18:09:27 by Mateo                                    //
+//   Updated: 2019/01/30 15:50:27 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -44,7 +44,7 @@ int main()
 							parser.load_book(path_to_file);
 							parser.parse_book();
 							parser.client::signal_end_parsing();
-							parser.clear_all();
+							return(1);
 						}
 				}
 			usleep(9000000);
@@ -52,7 +52,6 @@ int main()
 	while (parser.client::check_end());
 	parser.clear_bloom_tickers();
 	parser.clear_ticker_retries();
-	parser.clear_period_dates();
 	parser.data_base::finish_db();
 	delete[] watcher;
 

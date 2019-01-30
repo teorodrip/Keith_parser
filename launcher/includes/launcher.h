@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/24 18:53:42 by Mateo                                    */
+/*   Updated: 2019/01/29 13:21:48 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@
 #define DB_PASS "capiqunchartech"
 #define DB_HOST "192.168.27.122"
 #define DB_TIMOUT "10" //Max
-#define SQL_ALL_REQ "SELECT ticker_bbg, ticker_capiq FROM main_v2.static_inv_universe WHERE ticker_capiq IS NOT NULL AND ticker_capiq != '' ORDER BY is_invested DESC LIMIT 50"
+#define SQL_ALL_REQ "SELECT ticker_bbg, ticker_capiq FROM main_v2.static_inv_universe WHERE ticker_capiq IS NOT NULL AND ticker_capiq != '' AND is_invested=true"
 /* #define SQL_ALL_REQ "SELECT A.tickers FROM data.test_gregoire_ticker_list A\nLEFT JOIN (\nSELECT DISTINCT ON (ticker) ticker, event_time\nFROM data.test_gregoire_growth_margin\nORDER BY ticker, event_time DESC\n) B on A.tickers = B.ticker\nORDER BY event_time ASC NULLS FIRST" */
 #define PARSER_TICKERS_COL 0
 #define VM_TICKERS_COL 1

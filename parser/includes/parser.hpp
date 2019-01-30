@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/24 17:14:12 by Mateo                                    //
+//   Updated: 2019/01/30 15:28:21 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -95,9 +95,32 @@ typedef struct queue_s
 
 typedef struct ticker_json_s
 {
-  size_t len;
-  nlohmann::json *j;
+	size_t ticker_index;
+	std::string ticker_capiq;
+	std::vector<std::string> *dates_year;
+	std::vector<std::string> *dates_quarter;
+	std::vector<nlohmann::json> j_year[SHEET_NB];
+	std::vector<nlohmann::json> j_quarter[SHEET_NB];
 } ticker_json_t;
+
+typedef struct coord_s
+{
+	size_t i;
+	size_t j;
+} coord_t;
+
+#define FS_END_OF_SHEET 0x1
+typedef struct sheet_s
+{
+	int flags;
+	std::vector<coord_t> ticker_id;
+	std::vector<coord_t> end_tick;
+	std::vector<coord_t> fil_date;
+	size_t ticker_id_iter;
+	size_t end_ticker_iter;
+	size_t fil_date_iter;
+	std::vector<std::vector<std::string>> sheet;
+} sheet_t;
 
 class data_base
 {
@@ -109,12 +132,7 @@ public:
 									const char *db_user,
 									const char *db_pass,
 									const char *db_host);
-  bool upload_ticker_period(std::string capiq_ticker,
-														std::string period_date,
-														std::string bloom_ticker,
-														std::string data,
-														std::string date,
-														unsigned char sheet_nb);
+  bool upload_ticker(ticker_json_t *tick, std::string bloom_ticker, sheet_t *sheets);
   void finish_db();
 };
 
@@ -155,16 +173,12 @@ class excel_parser : public client, public data_base
 private:
   char **bloom_tickers;
 	int *ticker_retries;
-	std::string *period_dates;
 	bool *tickers_in_queue;
+	sheet_t sheets[SHEET_NB];
   unsigned short n_bloom_tickers;
   std::string file_path;
-  std::string ticker_name;
-	std::string fil_date;
-	unsigned char current_sheet;
   xlsxioreader book;
   std::string sheet_names[SHEET_NB];
-  size_t ticker_index;
   unsigned char vm_id;
 	queue_t queue;
   int flags;
@@ -172,13 +186,9 @@ private:
   bool issdigit(char *str);
   void handle_fatal_error(const std::string message);
 	bool handle_cell_error(std::string value);
-  void parse_row(const xlsxioreadersheet sheet, ticker_json_t *j_quarter, ticker_json_t *j_year);
-  void init_index(const xlsxioreadersheet sheet);
-  void init_ticker(const xlsxioreadersheet sheet);
-  void init_date(const xlsxioreadersheet sheet, ticker_json_t *j);
-  bool jump_rows(const xlsxioreadersheet sheet, const size_t cuant);
   std::string parse_excel_date(int serial_date);
 	void mark_cell_error(std::string cell_value);
+	void parse_tickers();
 
 public:
   excel_parser();
