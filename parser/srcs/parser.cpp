@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/30 18:53:51 by Mateo                                    //
+//   Updated: 2019/01/31 11:52:53 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -109,6 +109,27 @@ static void check_marks(sheet_t *sheet, std::string cell_value, size_t i, size_t
 		sheet->fil_date.push_back({i, j});
 }
 
+bool excel_parser::mark_cell_error(std::string cell_value, sheet_t *sheet)
+{
+	std::string error_arr[] = ERROR_ARR;
+	size_t i = 0;
+
+	while (!error_arr[i].empty())
+		{
+			if (error_arr[i] == cell_value)
+				{
+					if (sheet->end_tick.size() < sheet->ticker_id.size())
+						sheet->ticker_id.pop_back();
+					else if (sheet->end_tick.size() > sheet->ticker_id.size())
+						sheet->end_tick.pop_back();
+					sheet->flags |= FS_END_OF_SHEET;
+					return (true);
+				}
+			i++;
+		}
+	return (false);
+}
+
 void excel_parser::parse_book()
 {
   xlsxioreadersheet sheet;
@@ -129,6 +150,7 @@ void excel_parser::parse_book()
 							sheets[i].sheet.push_back(std::vector<std::string>());
 							while ((cell_value = xlsxioread_sheet_next_cell(sheet)) != NULL)
 								{
+									mark_cell_error(cell_value, sheets + i);
 									if (*cell_value == 0 || sheets[i].flags & FS_END_OF_SHEET)
 										break;
 									if (cell_j == 0)
@@ -225,13 +247,12 @@ void excel_parser::parse_tickers()
 					sheets[k].end_ticker_iter++;
 					sheets[k].ticker_id_iter++;
 					sheets[k].fil_date_iter += 2;
-					if (sheets[k].end_ticker_iter >= BATCH_SIZE)
+					if (sheets[k].end_ticker_iter >= sheets[k].end_tick.size())
 						sheets[k].flags |= FS_END_OF_SHEET;
 					if ((k == SHEET_NB - 1) && (sheets[k].flags & FS_END_OF_SHEET))
 						flags |= F_END_PARSING;
 				}
 			data_base::upload_ticker(&tick, bloom_tickers[tick.ticker_index], sheets);
-			break;
 		}
 }
 

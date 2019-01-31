@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/30 15:28:21 by Mateo                                    //
+//   Updated: 2019/01/31 11:40:59 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -187,7 +187,7 @@ private:
   void handle_fatal_error(const std::string message);
 	bool handle_cell_error(std::string value);
   std::string parse_excel_date(int serial_date);
-	void mark_cell_error(std::string cell_value);
+	bool mark_cell_error(std::string cell_value, sheet_t *sheet);
 	void parse_tickers();
 
 public:
