@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/18 15:27:33 by Mateo                                    //
-//   Updated: 2019/01/31 12:14:02 by Mateo                                    //
+//   Updated: 2019/01/31 16:04:00 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -68,7 +68,16 @@ static std::string parse_excel_date(std::string date_str)
 {
 	int n_day, n_month, n_year;
 	std::string parsed_date;
-	int date = std::stoi(date_str);
+	int date;
+	try
+		{
+			date = std::stoi(date_str);
+		}
+	catch (std::exception &e)
+		{
+			printf("Warning: Data with value: %s, this date is going to be set to 0 (Excel format)\n", date_str.c_str());
+			date = 0;
+		}
 	// Excel/Lotus 123 have a bug with 29-02-1900. 1900 is not a
 	// leap year, but Excel/Lotus 123 think it is...
 	if (date == 60)
@@ -105,78 +114,86 @@ static std::string parse_excel_date(std::string date_str)
 bool data_base::upload_ticker(ticker_json_t *tick, std::string bloom_ticker, sheet_t *sheets)
 {
   PGresult *res;
+	std::string request;
   std::string request_base;
-  std::string request_body_year = "";
+  std::string request_body = "";
 	size_t pos;
 
-	request_base = "INSERT INTO " TABLE_PATH " VALUES";
+	request = "BEGIN TRANSACTION;\n";
+	request_base = "INSERT INTO " TABLE_YEAR_PATH " VALUES";
+	//year
 	for (size_t i = 1; i < tick->dates_year->size(); i++)
 		{
 			if (i > 1)
-				request_body_year += ",";
-			request_body_year += "(\'" + bloom_ticker +
+				request_body += ",";
+			request_body += "(\'" + bloom_ticker +
 				"\',\'" + parse_excel_date(tick->dates_year->at(i)) + "\',";
 			//fil date 1
 			pos = sheets[1].fil_date[sheets[1].fil_date_iter - 2].i;
 			if (i < sheets[1].sheet[pos].size())
-				request_body_year += "\'" + parse_excel_date(sheets[1].sheet[pos][i]) + "\',";
+				request_body += "\'" + parse_excel_date(sheets[1].sheet[pos][i]) + "\',";
 			else
-				request_body_year += "NULL,";
+				request_body += "NULL,";
 			//fill date 2
 			pos = sheets[2].fil_date[sheets[2].fil_date_iter - 2].i;
 			if (i < sheets[2].sheet[pos].size())
-				request_body_year += "\'" + parse_excel_date(sheets[2].sheet[pos][i]) + "\',";
+				request_body += "\'" + parse_excel_date(sheets[2].sheet[pos][i]) + "\',";
 			else
-				request_body_year += "NULL,";
+				request_body += "NULL,";
 			//fill date 3
 			pos = sheets[3].fil_date[sheets[3].fil_date_iter - 2].i;
 			if (i < sheets[3].sheet[pos].size())
-				request_body_year += "\'" + parse_excel_date(sheets[3].sheet[pos][i]) + "\',";
+				request_body += "\'" + parse_excel_date(sheets[3].sheet[pos][i]) + "\',";
 			else
-				request_body_year += "NULL,";
-			request_body_year += "\'" + tick->ticker_capiq +
+				request_body += "NULL,";
+			request_body += "\'" + tick->ticker_capiq +
 				"\',\'" + tick->j_year[1][i - 1].dump() +
 				"\',\'" + tick->j_year[2][i - 1].dump() +
 				"\',\'" + tick->j_year[3][i - 1].dump() +
 				"\',\'" + tick->j_year[0][i - 1].dump() +
 				"\')";
 		}
+	request += request_base + request_body + ";\n";
+	request_base = "INSERT INTO " TABLE_QUARTER_PATH " VALUES";
+	request_body = "";
+	//	quarter
 	for (size_t i = 1; i < tick->dates_quarter->size(); i++)
 		{
 			if (i > 1)
-				request_body_year += ",";
-			request_body_year += "(\'" + bloom_ticker +
+				request_body += ",";
+			request_body += "(\'" + bloom_ticker +
 				"\',\'" + parse_excel_date(tick->dates_quarter->at(i)) + "\',";
 			//fil date 1
 			pos = sheets[1].fil_date[sheets[1].fil_date_iter - 1].i;
 			if (i < sheets[1].sheet[pos].size())
-				request_body_year += "\'" + parse_excel_date(sheets[1].sheet[pos][i]) + "\',";
+				request_body += "\'" + parse_excel_date(sheets[1].sheet[pos][i]) + "\',";
 			else
-				request_body_year += "NULL,";
+				request_body += "NULL,";
 			//fill date 2
 			pos = sheets[2].fil_date[sheets[2].fil_date_iter - 1].i;
 			if (i < sheets[2].sheet[pos].size())
-				request_body_year += "\'" + parse_excel_date(sheets[2].sheet[pos][i]) + "\',";
+				request_body += "\'" + parse_excel_date(sheets[2].sheet[pos][i]) + "\',";
 			else
-				request_body_year += "NULL,";
+				request_body += "NULL,";
 			//fill date 3
 			pos = sheets[3].fil_date[sheets[3].fil_date_iter - 1].i;
 			if (i < sheets[3].sheet[pos].size())
-				request_body_year += "\'" + parse_excel_date(sheets[3].sheet[pos][i]) + "\',";
+				request_body += "\'" + parse_excel_date(sheets[3].sheet[pos][i]) + "\',";
 			else
-				request_body_year += "NULL,";
-			request_body_year += "\'" + tick->ticker_capiq +
+				request_body += "NULL,";
+			request_body += "\'" + tick->ticker_capiq +
 				"\',\'" + tick->j_quarter[1][i - 1].dump() +
 				"\',\'" + tick->j_quarter[2][i - 1].dump() +
 				"\',\'" + tick->j_quarter[3][i - 1].dump() +
 				"\',\'" + tick->j_quarter[0][i - 1].dump() +
 				"\')";
 		}
-	request_base += request_body_year;
-  res = PQexec(conn, request_base.c_str());
+	request += request_base + request_body + ";\n" + " COMMIT;";
+  res = PQexec(conn, request.c_str());
   if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			std::cout << "Error: executing the following request:\n" + request_base + "\n";
+			std::cout << "(SQL Error)\n";
+			std::cerr << "Error: executing the following request:\n" + request + "\n";
 			PQclear(res);
 			return (true);
 		}

@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/31 11:40:59 by Mateo                                    //
+//   Updated: 2019/01/31 13:37:52 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -71,7 +71,8 @@
 #define DB_USER "capiq_manager"
 #define DB_PASS "capiqunchartech"
 #define DB_HOST "192.168.27.122"
-#define TABLE_PATH "ciq.statements_standard"
+#define TABLE_YEAR_PATH "ciq.statements_standard_year"
+#define TABLE_QUARTER_PATH "ciq.statements_standard_quarter"
 #define COL_BLOOM_TICKER "ticker_bbg"
 #define COL_PERIOD_DATE "period_date"
 #define COL_INC_FIL_DATE "income_filled_date"

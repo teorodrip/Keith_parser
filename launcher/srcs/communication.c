@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/24 17:39:21 by Mateo                                    */
+/*   Updated: 2019/01/31 15:16:57 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -177,6 +177,7 @@ static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 	add_from_list(&i, &j, BATCH_SIZE, buff, tickers);
 	*((unsigned short *)(buff + 1)) = j - META_INFO_LEN;
 	send(cli->client_fd, buff, j, 0x0);
+	printf("Ticker list status: [%lu/%lu]\n", tickers->pos, tickers->n_tuples);
 }
 
 static void send_vm_id(const client_t *cli)

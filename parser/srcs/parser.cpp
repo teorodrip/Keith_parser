@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/31 11:52:53 by Mateo                                    //
+//   Updated: 2019/01/31 13:51:31 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -306,8 +306,20 @@ void excel_parser::close_book()
 void excel_parser::clear_all()
 {
   this->file_path = "";
-  xlsxioread_close(this->book);
   this->flags = 0x0;
+	for (int i = 0; i < SHEET_NB; i++)
+		{
+			sheets[i].flags = 0x0;
+			sheets[i].ticker_id.clear();
+			sheets[i].end_tick.clear();
+			sheets[i].fil_date.clear();
+			sheets[i].ticker_id_iter = 0;
+			sheets[i].end_ticker_iter = 0;
+			sheets[i].fil_date_iter = 0;
+			for (size_t j = 0; j < sheets[i].sheet.size(); j++)
+				sheets[i].sheet[j].clear();
+			sheets[i].sheet.clear();
+		}
 }
 
 void excel_parser::clear_bloom_tickers()
