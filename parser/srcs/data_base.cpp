@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/18 15:27:33 by Mateo                                    //
-//   Updated: 2019/01/31 16:04:00 by Mateo                                    //
+//   Updated: 2019/01/31 19:15:19 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -193,7 +193,7 @@ bool data_base::upload_ticker(ticker_json_t *tick, std::string bloom_ticker, she
   if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			std::cout << "(SQL Error)\n";
-			std::cerr << "Error: executing the following request:\n" + request + "\n";
+			// std::cerr << "Error: executing the following request:\n" + request + "\n";
 			PQclear(res);
 			return (true);
 		}

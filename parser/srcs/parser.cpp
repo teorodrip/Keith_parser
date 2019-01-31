@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/31 13:51:31 by Mateo                                    //
+//   Updated: 2019/01/31 19:39:58 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -152,11 +152,15 @@ void excel_parser::parse_book()
 								{
 									mark_cell_error(cell_value, sheets + i);
 									if (*cell_value == 0 || sheets[i].flags & FS_END_OF_SHEET)
-										break;
+										{
+											free(cell_value);
+											break;
+										}
 									if (cell_j == 0)
 										check_marks(sheets + i, cell_value, row_i, cell_j);
 									sheets[i].sheet[row_i].push_back(cell_value);
 									cell_j++;
+									free(cell_value);
 								}
 							row_i++;
 						}
@@ -206,7 +210,7 @@ void excel_parser::parse_tickers()
 										{
 											try
 												{
-														((tick.j_year[k])[p - 1])[sheets[k].sheet[i][0]] = sheets[k].sheet[i][p];
+													((tick.j_year[k])[p - 1])[sheets[k].sheet[i][0]] = sheets[k].sheet[i][p];
 												}
 											catch (const std::exception &e)
 												{
@@ -233,7 +237,7 @@ void excel_parser::parse_tickers()
 										{
 											try
 												{
-														((tick.j_quarter[k])[p - 1])[sheets[k].sheet[i][0]] = sheets[k].sheet[i][p];
+													((tick.j_quarter[k])[p - 1])[sheets[k].sheet[i][0]] = sheets[k].sheet[i][p];
 												}
 											catch (const std::exception &e)
 												{
@@ -319,6 +323,26 @@ void excel_parser::clear_all()
 			for (size_t j = 0; j < sheets[i].sheet.size(); j++)
 				sheets[i].sheet[j].clear();
 			sheets[i].sheet.clear();
+		}
+}
+
+void excel_parser::free_all()
+{
+  this->file_path = "";
+  this->flags = 0x0;
+	for (int i = 0; i < SHEET_NB; i++)
+		{
+			sheets[i].flags = 0x0;
+			std::vector<coord_t>().swap(sheets[i].ticker_id);
+			std::vector<coord_t>().swap(sheets[i].end_tick);
+			std::vector<coord_t>().swap(sheets[i].fil_date);
+			sheets[i].ticker_id_iter = 0;
+			sheets[i].end_ticker_iter = 0;
+			sheets[i].fil_date_iter = 0;
+			size_t six = sheets[i].sheet.size();
+			for (size_t j = 0; j < six; j++)
+				std::vector<std::string>().swap(sheets[i].sheet[j]);
+			std::vector<std::vector<std::string>>().swap(sheets[i].sheet);
 		}
 }
 

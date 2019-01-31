@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/31 13:37:52 by Mateo                                    //
+//   Updated: 2019/01/31 19:00:52 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -199,6 +199,7 @@ public:
   void clear_flags();
   void close_book();
   void clear_all();
+  void free_all();
 	void clear_bloom_tickers();
 	void clear_ticker_retries();
 	void clear_period_dates();
