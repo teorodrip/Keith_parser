@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/01/31 15:16:57 by Mateo                                    */
+/*   Updated: 2019/02/01 16:54:05 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,7 @@ static void send_tickers_parser(const client_t *cli, tickers_t *tickers)
 	char *value;
 
 	for (size_t i = 0; i < tickers->n_tuples; i++)
-		buff_len += tickers->tick_len[i][PARSER_TICKERS_COL];
+		buff_len += (*(tickers->tick_len))[i][PARSER_TICKERS_COL];
 	//the len includes the null at end just but the size before the ticker
 	buff_len = (buff_len + tickers->n_tuples + META_INFO_LEN);
 	if (!(buff = (char *)malloc(sizeof(char) * buff_len)))
@@ -90,8 +90,8 @@ static void send_tickers_parser(const client_t *cli, tickers_t *tickers)
 	j = META_INFO_LEN;
 	for (size_t i = 0; i < tickers->n_tuples; i++)
 		{
-			value = PQgetvalue(tickers->res, i, PARSER_TICKERS_COL);
-			len = tickers->tick_len[i][PARSER_TICKERS_COL];
+			value = (*(tickers->tickers))[i][PARSER_TICKERS_COL];
+			len = (*(tickers->tick_len))[i][PARSER_TICKERS_COL];
 			buff[j++] = len;
 			memcpy(buff + j, value, len);
 			j += len;
@@ -106,11 +106,12 @@ static void add_from_list(size_t *i, size_t *j, size_t batch, char *buff, ticker
 
 	while (tickers->pos < tickers->n_tuples && *i < batch)
 		{
-			value = PQgetvalue(tickers->res, tickers->pos, VM_TICKERS_COL);
-			tick_len = tickers->tick_len[tickers->pos][VM_TICKERS_COL];
+			value = (*(tickers->tickers))[tickers->pos][VM_TICKERS_COL];
+			tick_len = (*(tickers->tick_len))[tickers->pos][VM_TICKERS_COL];
 			*((unsigned short *)(buff + *j)) = (unsigned short)tickers->pos;
 			(*j) += 2;
 			buff[(*j)++] = tick_len;
+			printf ("%s (%d)\n", value, tick_len);
 			memcpy(buff + *j, value, tick_len);
 			(*j) += tick_len;
 			(*i)++;
@@ -134,8 +135,8 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 				{
 					while(tmp->start < tmp->end)
 						{
-							value = PQgetvalue(tickers->res, tmp->start, VM_TICKERS_COL);
-							tick_len = tickers->tick_len[tmp->start][VM_TICKERS_COL];
+							value = (*(tickers->tickers))[tmp->start][VM_TICKERS_COL];
+							tick_len = (*(tickers->tick_len))[tmp->start][VM_TICKERS_COL];
 							*((unsigned short *)(buff + *j)) = (unsigned short)tmp->start;
 							(*j) += 2;
 							buff[(*j)++] = tick_len;

@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/01/29 13:21:48 by Mateo                                    */
+/*   Updated: 2019/02/01 16:31:43 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include "./server.h"
 #include "./protocol.h"
 #include "./logger.h"
+#include "../includes/tickers.h"
 
 #define VM_NB 1
 #define VM_NAME_1 "windows_1"
@@ -70,9 +71,14 @@ typedef struct tickers_s
 	size_t n_tuples;
 	size_t n_cols;
 	size_t pos;
+#ifdef TICKERS_H
+	unsigned char (*tick_len)[N_TUPLES][N_COLS];
+	char (*tickers)[N_TUPLES][N_COLS][255];
+#else
 	unsigned char **tick_len;
+	char ***tickers;
+#endif
 	queue_t *queue;
-	PGresult *res;
 } tickers_t;
 
 pthread_mutex_t mutex[VM_NB];

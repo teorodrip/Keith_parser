@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 14:21:03 by Mateo                                    */
-/*   Updated: 2019/01/23 15:45:20 by Mateo                                    */
+/*   Updated: 2019/02/01 16:25:41 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,6 @@ void end_proper(client_t *cli, server_t *srv)
 
 int main()
 {
-	PGconn *conn;
 	server_t srv;
 	client_t *cli_head;
 	tickers_t tickers;
@@ -37,9 +36,19 @@ int main()
 
 	flags = 0x0;
 	tickers = (tickers_t){0, 0, 0, NULL, NULL, NULL};
+#ifdef TICKERS_H
+	char tickers_main[N_TUPLES][N_COLS][255] = TICKERS;
+	unsigned char tick_len_main[N_TUPLES][N_COLS] = TICK_LEN;
+	tickers.n_tuples = N_TUPLES;
+	tickers.n_cols = N_COLS;
+	tickers.tick_len = &tick_len_main;
+	tickers.tickers = &tickers_main;
+#else
+	PGconn *conn;
 	conn = connect_db(DB_NAME, DB_USER, DB_PASS, DB_HOST);
 	get_data(conn, SQL_ALL_REQ, &tickers);
 	PQfinish(conn);
+#endif
 	init_server(&srv);
 	cli_head = NULL;
 	while (!(flags & F_END_2))
