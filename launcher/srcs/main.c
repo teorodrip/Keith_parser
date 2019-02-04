@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 14:21:03 by Mateo                                    */
-/*   Updated: 2019/02/01 16:25:41 by Mateo                                    */
+/*   Updated: 2019/02/04 15:42:32 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,15 +27,19 @@ void end_proper(client_t *cli, server_t *srv)
 	close(srv->server_fd);
 }
 
-int main()
+int main(int argc, char **argv)
 {
 	server_t srv;
 	client_t *cli_head;
 	tickers_t tickers;
 	uint64_t flags;
+	int tmp_pos = 0;
+
+	if (argc == 2)
+		tmp_pos = atoi(argv[1]);
 
 	flags = 0x0;
-	tickers = (tickers_t){0, 0, 0, NULL, NULL, NULL};
+	tickers = (tickers_t){0, 0, tmp_pos, NULL, NULL, NULL};
 #ifdef TICKERS_H
 	char tickers_main[N_TUPLES][N_COLS][255] = TICKERS;
 	unsigned char tick_len_main[N_TUPLES][N_COLS] = TICK_LEN;

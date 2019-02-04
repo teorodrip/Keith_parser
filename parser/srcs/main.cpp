@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/01/31 19:07:08 by Mateo                                    //
+//   Updated: 2019/02/01 18:39:24 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -42,7 +42,6 @@ static void parse_from_dir(std::string path)
 			parser.client::signal_end_parsing();
 			printf("Done\n");
 			parser.clear_all();
-			break;
 			// goto label;
 		}
 	// label:

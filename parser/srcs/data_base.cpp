@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/18 15:27:33 by Mateo                                    //
-//   Updated: 2019/01/31 19:15:19 by Mateo                                    //
+//   Updated: 2019/02/04 11:54:22 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -117,6 +117,8 @@ bool data_base::upload_ticker(ticker_json_t *tick, std::string bloom_ticker, she
 	std::string request;
   std::string request_base;
   std::string request_body = "";
+	std::string error_message;
+	std::regex err_check (".*duplicate.*");
 	size_t pos;
 
 	request = "BEGIN TRANSACTION;\n";
@@ -192,9 +194,16 @@ bool data_base::upload_ticker(ticker_json_t *tick, std::string bloom_ticker, she
   res = PQexec(conn, request.c_str());
   if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			std::cout << "(SQL Error)\n";
-			// std::cerr << "Error: executing the following request:\n" + request + "\n";
+			error_message = PQresultErrorMessage(res);
+			printf(SEPARATOR "%s" SEPARATOR, error_message.c_str());
+			if (!(std::regex_search(error_message, err_check, std::regex_constants::match_any)))
+				{
+					printf("AAAA\n");
+					std::cerr << "Error: executing the following request:\n" + request + "\n";
+					exit(2);
+				}
 			PQclear(res);
+			PQexec(conn, "ROLLBACK");
 			return (true);
 		}
   // res = PQexec(conn, "COMMIT");

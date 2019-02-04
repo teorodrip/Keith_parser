@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/01/31 19:00:52 by Mateo                                    //
+//   Updated: 2019/02/04 14:57:05 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -25,6 +25,8 @@
 #include <nlohmann/json.hpp>
 #include <regex>
 #include "../../launcher/includes/protocol.h"
+
+#define SEPARATOR "======================================================================================\n"
 
 #define CIQINACTIVE_RTETRIES 4
 #define INVALID_IDNENTIFIER_RETRIES 1
@@ -111,6 +113,8 @@ typedef struct coord_s
 } coord_t;
 
 #define FS_END_OF_SHEET 0x1
+#define FS_ERROR_IN_TICKER 0x2
+#define FS_EMPTY_ROW 0x4
 typedef struct sheet_s
 {
 	int flags;
@@ -189,6 +193,7 @@ private:
 	bool handle_cell_error(std::string value);
   std::string parse_excel_date(int serial_date);
 	bool mark_cell_error(std::string cell_value, sheet_t *sheet);
+	void check_marks(sheet_t *sheet, std::string cell_value, size_t i, size_t j);
 	void parse_tickers();
 
 public:

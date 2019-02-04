@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/10 17:57:13 by Mateo                                    //
-//   Updated: 2019/01/31 19:39:58 by Mateo                                    //
+//   Updated: 2019/02/04 15:25:10 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -95,17 +95,21 @@ void excel_parser::load_book(const std::string file_path)
 		}
 }
 
-static void check_marks(sheet_t *sheet, std::string cell_value, size_t i, size_t j)
+void excel_parser::check_marks(sheet_t *sheet, std::string cell_value, size_t i, size_t j)
 {
 	if (cell_value == TICKER_START)
-		sheet->ticker_id.push_back({i, j});
+		{
+			sheet->flags &= ~(FS_ERROR_IN_TICKER);
+			sheet->ticker_id.push_back({i, j});
+		}
 	else if (cell_value == END_TICKER)
 		{
-			sheet->end_tick.push_back({i, j});
 			if (sheet->end_tick.size() == BATCH_SIZE)
 				sheet->flags |= FS_END_OF_SHEET;
+			if (!(sheet->flags & FS_ERROR_IN_TICKER))
+				sheet->end_tick.push_back({i, j});
 		}
-	else if (cell_value == FIL_DATE)
+	else if (cell_value == FIL_DATE && !(sheet->flags & FS_ERROR_IN_TICKER))
 		sheet->fil_date.push_back({i, j});
 }
 
@@ -122,7 +126,7 @@ bool excel_parser::mark_cell_error(std::string cell_value, sheet_t *sheet)
 						sheet->ticker_id.pop_back();
 					else if (sheet->end_tick.size() > sheet->ticker_id.size())
 						sheet->end_tick.pop_back();
-					sheet->flags |= FS_END_OF_SHEET;
+					sheet->flags |= FS_ERROR_IN_TICKER;
 					return (true);
 				}
 			i++;
@@ -147,22 +151,32 @@ void excel_parser::parse_book()
 					while (!(sheets[i].flags & FS_END_OF_SHEET) && xlsxioread_sheet_next_row(sheet))
 						{
 							cell_j = 0;
-							sheets[i].sheet.push_back(std::vector<std::string>());
+							if (!(sheets[i].flags & FS_EMPTY_ROW))
+								sheets[i].sheet.push_back(std::vector<std::string>());
 							while ((cell_value = xlsxioread_sheet_next_cell(sheet)) != NULL)
 								{
+									sheets[i].flags &= ~(FS_EMPTY_ROW);
 									mark_cell_error(cell_value, sheets + i);
-									if (*cell_value == 0 || sheets[i].flags & FS_END_OF_SHEET)
+									if (cell_j == 0)
+										check_marks(sheets + i, cell_value, row_i, cell_j);
+									if ((*cell_value == 0 && cell_j == 0) || sheets[i].flags & FS_ERROR_IN_TICKER)
+										{
+											free(cell_value);
+											sheets[i].sheet[row_i].clear();
+											sheets[i].flags |= FS_EMPTY_ROW;
+											break;
+										}
+									else if (*cell_value == 0)
 										{
 											free(cell_value);
 											break;
 										}
-									if (cell_j == 0)
-										check_marks(sheets + i, cell_value, row_i, cell_j);
 									sheets[i].sheet[row_i].push_back(cell_value);
 									cell_j++;
 									free(cell_value);
 								}
-							row_i++;
+							if (!(sheets[i].flags & FS_EMPTY_ROW))
+								row_i++;
 						}
 				}
 			xlsxioread_sheet_close(sheet);
@@ -224,9 +238,9 @@ void excel_parser::parse_tickers()
 					if (k == 0)
 						{
 							//dates quarter
-							tick.dates_quarter = &(sheets[k].sheet[i + 3]);
+							tick.dates_quarter = &(sheets[k].sheet[i + 2]);
 						}
-					i += 5;
+					i += 4;
 					tick.j_quarter[k].resize(tick.dates_quarter->size());
 					while (!(sheets[k].sheet[i].size()) || sheets[k].sheet[i][j] != END_TICKER)
 						{
