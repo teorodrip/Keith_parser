@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/02/04 14:57:05 by Mateo                                    //
+//   Updated: 2019/02/05 10:31:44 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -89,12 +89,13 @@
 #define COLS_DATES {COL_PERIOD_DATE, COL_INC_FIL_DATE, COL_BAL_FIL_DATE, COL_CASH_FIL_DATE}
 #define COLS_DATA {COL_KEY_SHEET, COL_INC_STAT_SHEET, COL_BAL_SHEET, COL_CASH_SHEET}
 
-typedef struct queue_s
-{
-  uint32_t start; //inclusive
-  uint32_t end; //exclusive
-  struct queue_s *next;
-} queue_t;
+//to manage a queue
+// typedef struct queue_s
+// {
+//   uint32_t start; //inclusive
+//   uint32_t end; //exclusive
+//   struct queue_s *next;
+// } queue_t;
 
 typedef struct ticker_json_s
 {
@@ -138,6 +139,7 @@ public:
 									const char *db_pass,
 									const char *db_host);
   bool upload_ticker(ticker_json_t *tick, std::string bloom_ticker, sheet_t *sheets);
+	bool exec_query(std::string query);
   void finish_db();
 };
 
@@ -155,7 +157,7 @@ public:
   unsigned char get_watching_directories();
   void signal_shutdown(const unsigned char vm_nb);
   void signal_reboot(const unsigned char vm_nb);
-  void send_queue(const queue_t queue);
+  // void send_queue(const queue_t queue);
 	void signal_parsing();
 	void signal_end_parsing();
 	unsigned char check_end();
@@ -177,15 +179,15 @@ class excel_parser : public client, public data_base
 {
 private:
   char **bloom_tickers;
-	int *ticker_retries;
-	bool *tickers_in_queue;
+	// int *ticker_retries;
+	// bool *tickers_in_queue;
 	sheet_t sheets[SHEET_NB];
   unsigned short n_bloom_tickers;
   std::string file_path;
   xlsxioreader book;
   std::string sheet_names[SHEET_NB];
   unsigned char vm_id;
-	queue_t queue;
+	// queue_t queue;
   int flags;
 
   bool issdigit(char *str);

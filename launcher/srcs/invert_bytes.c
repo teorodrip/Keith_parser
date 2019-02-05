@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/08 15:27:43 by Mateo                                    */
-/*   Updated: 2019/01/08 15:28:15 by Mateo                                    */
+/*   Updated: 2019/02/05 12:26:52 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ static void generic_case(void *arr, const size_t size)
 	}
 }
 
+// just invert the bytes of variable
 void		invert_bytes(void *arr, const size_t size)
 {
 	if (size == 1)

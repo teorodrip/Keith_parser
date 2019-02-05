@@ -6,11 +6,13 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/07 17:03:33 by Mateo                                    */
-/*   Updated: 2019/02/01 16:54:05 by Mateo                                    */
+/*   Updated: 2019/02/05 12:22:00 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/launcher.h"
+
+
 static unsigned char complete_reminent(const char *buff, const ssize_t readed,
 																			 unsigned char leftover, char *leftover_val, ssize_t *i)
 {
@@ -23,6 +25,7 @@ static unsigned char complete_reminent(const char *buff, const ssize_t readed,
 	return (leftover % sizeof(queue_t));
 }
 
+// add tickers to queue
 // data size will be allways multiple of sizeof(queue_t)
 static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 														 const uint16_t data_size, const unsigned char offset,
@@ -34,10 +37,13 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 	queue_t *tmp;
 
 	i = 0;
+	// if there are leftover in the buff complet them
 	if (leftover)
 		{
+			// if still leftovers after this read retrun the size of the remminent
 			if ((leftover = complete_reminent(buff, readed, leftover, leftover_val, &i)))
 				return (data_size - i);
+			// if not add the leftover to queue
 			else
 				{
 					if (!(tmp = (queue_t *)malloc(sizeof(queue_t))))
@@ -47,9 +53,11 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 					tickers->queue = tmp;
 				}
 		}
+	// loop while we reach the end  of buff or we can get a complete queue_t node
 	while ((i + sizeof(queue_t)) <= (size_t)readed &&
 				 (i + sizeof(queue_t)) <= data_size)
 		{
+			// add the queue_t node to the queue
 			if (!(tmp  = (queue_t *)malloc(sizeof(queue_t))))
 				exit(2);
 			*tmp = *((queue_t *)buff);
@@ -57,8 +65,10 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 			tickers->queue = tmp;
 			i += sizeof(queue_t);
 		}
+	// set the leftover with the remminent of the buffer
 	if (i < data_size && i < readed && readed == BUFF_SIZE - offset)
 		leftover = complete_reminent(buff, readed, leftover, leftover_val, &i);
+	// there is an error in the format
 	else if (i < data_size && i < readed && readed != BUFF_SIZE - offset)
 		{
 			dprintf(2, "Error: in the data of the socket");
@@ -67,6 +77,7 @@ static uint16_t add_to_queue(const char *buff, const ssize_t readed,
 	return (data_size - i);
 }
 
+// send the list of tickers to the parser
 static void send_tickers_parser(const client_t *cli, tickers_t *tickers)
 {
 	unsigned char len = 0;
@@ -75,6 +86,7 @@ static void send_tickers_parser(const client_t *cli, tickers_t *tickers)
 	char *buff;
 	char *value;
 
+	// calculate  total len
 	for (size_t i = 0; i < tickers->n_tuples; i++)
 		buff_len += (*(tickers->tick_len))[i][PARSER_TICKERS_COL];
 	//the len includes the null at end just but the size before the ticker
@@ -88,6 +100,7 @@ static void send_tickers_parser(const client_t *cli, tickers_t *tickers)
 	buff[0] = 0x03;
 	*((unsigned short *)(buff + 1)) = tickers->n_tuples;
 	j = META_INFO_LEN;
+	// load all the data in the buff
 	for (size_t i = 0; i < tickers->n_tuples; i++)
 		{
 			value = (*(tickers->tickers))[i][PARSER_TICKERS_COL];
@@ -96,14 +109,18 @@ static void send_tickers_parser(const client_t *cli, tickers_t *tickers)
 			memcpy(buff + j, value, len);
 			j += len;
 		}
+	//send it to the client
 	send(cli->client_fd, buff, buff_len, 0x0);
+	free (buff);
 }
 
+// add the tickers from the list
 static void add_from_list(size_t *i, size_t *j, size_t batch, char *buff, tickers_t *tickers)
 {
 	char *value;
 	unsigned char tick_len;
 
+	// complete a batch with the list
 	while (tickers->pos < tickers->n_tuples && *i < batch)
 		{
 			value = (*(tickers->tickers))[tickers->pos][VM_TICKERS_COL];
@@ -119,6 +136,7 @@ static void add_from_list(size_t *i, size_t *j, size_t batch, char *buff, ticker
 		}
 }
 
+// add the tickers from the queue
 static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, tickers_t *tickers)
 {
 	size_t queue_siz;
@@ -128,11 +146,13 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 	queue_t *tmp = tickers->queue;
 	queue_t *for_free = tickers->queue;
 
+	// complete batch with queue until queue is empty
 	while (*i < batch && tmp)
 		{
 			queue_siz = (tmp->end - tmp->start);
 			if (queue_siz <= (batch - *i))
 				{
+					// load the tickers in the range specified by the queue node
 					while(tmp->start < tmp->end)
 						{
 							value = (*(tickers->tickers))[tmp->start][VM_TICKERS_COL];
@@ -145,6 +165,7 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 							(*i)++;
 							(tmp->start)++;
 						}
+					// remove node from queue
 					if (prev)
 						prev->next = tmp->next;
 					else
@@ -160,6 +181,8 @@ static void add_from_queue(size_t *i, size_t *j, size_t batch, char *buff, ticke
 				}
 		}
 }
+
+// send the tickers to the virtual machines
 static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 {
 	if (tickers->pos >= tickers->n_tuples && tickers->queue == NULL)
@@ -174,6 +197,7 @@ static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 	i = 0;
 	j = META_INFO_LEN;
 	buff[j++] = BATCH_SIZE;
+	// firs the queue is priorized then add tickers from the list
 	add_from_queue(&i, &j, BATCH_SIZE, buff, tickers);
 	add_from_list(&i, &j, BATCH_SIZE, buff, tickers);
 	*((unsigned short *)(buff + 1)) = j - META_INFO_LEN;
@@ -181,12 +205,14 @@ static void send_tickers_vm(const client_t *cli, tickers_t *tickers)
 	printf("Ticker list status: [%lu/%lu]\n", tickers->pos, tickers->n_tuples);
 }
 
+// send the id of the vm
 static void send_vm_id(const client_t *cli)
 {
 	char buff[] = {SIG_VM_SEND_ID, 0x01, 0x00, cli->id};
 	send(cli->client_fd, buff, META_INFO_LEN + 1,0x0);
 }
 
+// answer depending on the code received by the clients
 void decode_data(const char *buff,
 								 const ssize_t readed,
 								 client_t *cli_head,
@@ -199,9 +225,9 @@ void decode_data(const char *buff,
 	unsigned char offset;
 	unsigned char res;
 
-	/* write(1, buff, readed); */
-	/* write(1, "\n", 1); */
 	offset = 0;
+	// if the code is still in use will be different to 0xFF
+	// if is 0xFF a code will be assigned from the readed buffer
 	if (conn_code == 0xFF)
 		{
 			if (readed <= META_INFO_LEN)
@@ -210,6 +236,7 @@ void decode_data(const char *buff,
 			data_size = *((uint16_t *)(buff + 1));
 			offset = 3;
 		}
+	// act depending on the code received (see protocol.txt)
 	switch (conn_code)
 		{
 		case 0x00:

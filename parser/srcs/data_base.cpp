@@ -6,18 +6,20 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/18 15:27:33 by Mateo                                    //
-//   Updated: 2019/02/04 11:54:22 by Mateo                                    //
+//   Updated: 2019/02/05 11:10:05 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
 #include "../includes/parser.hpp"
 #include <fstream>
 
+//constructor
 data_base::data_base()
 {
   conn = NULL;
 }
 
+// connect to the data base specified in the header file
 void data_base::connect_db(const char *db_name,
 													 const char *db_user,
 													 const char *db_pass,
@@ -25,6 +27,7 @@ void data_base::connect_db(const char *db_name,
 {
   printf("Connecting to: %s (%s)\n", db_name, db_host);
   conn = PQsetdbLogin(db_host, NULL, NULL, NULL, db_name, db_user, db_pass);
+	// switch betweeen possible errors
   switch(PQstatus(conn))
 		{
 		case CONNECTION_OK:
@@ -64,11 +67,13 @@ void data_base::connect_db(const char *db_name,
 		}
 }
 
+// parse the date from excel format to SQL format
 static std::string parse_excel_date(std::string date_str)
 {
 	int n_day, n_month, n_year;
 	std::string parsed_date;
 	int date;
+	// try to convert the string to number, if is not a valid number like "NA" the date is set to 0
 	try
 		{
 			date = std::stoi(date_str);
@@ -78,6 +83,7 @@ static std::string parse_excel_date(std::string date_str)
 			printf("Warning: Data with value: %s, this date is going to be set to 0 (Excel format)\n", date_str.c_str());
 			date = 0;
 		}
+	// Just magic tricks
 	// Excel/Lotus 123 have a bug with 29-02-1900. 1900 is not a
 	// leap year, but Excel/Lotus 123 think it is...
 	if (date == 60)
@@ -111,19 +117,18 @@ static std::string parse_excel_date(std::string date_str)
 	return (parsed_date);
 }
 
+// upload a ticker quarter and year to the data base
 bool data_base::upload_ticker(ticker_json_t *tick, std::string bloom_ticker, sheet_t *sheets)
 {
-  PGresult *res;
 	std::string request;
   std::string request_base;
   std::string request_body = "";
-	std::string error_message;
-	std::regex err_check (".*duplicate.*");
 	size_t pos;
 
+	// header of transaction
 	request = "BEGIN TRANSACTION;\n";
 	request_base = "INSERT INTO " TABLE_YEAR_PATH " VALUES";
-	//year
+	// fill the year row
 	for (size_t i = 1; i < tick->dates_year->size(); i++)
 		{
 			if (i > 1)
@@ -155,10 +160,11 @@ bool data_base::upload_ticker(ticker_json_t *tick, std::string bloom_ticker, she
 				"\',\'" + tick->j_year[0][i - 1].dump() +
 				"\')";
 		}
+	// the other insert
 	request += request_base + request_body + ";\n";
 	request_base = "INSERT INTO " TABLE_QUARTER_PATH " VALUES";
 	request_body = "";
-	//	quarter
+	//	fill the quarter row
 	for (size_t i = 1; i < tick->dates_quarter->size(); i++)
 		{
 			if (i > 1)
@@ -190,34 +196,41 @@ bool data_base::upload_ticker(ticker_json_t *tick, std::string bloom_ticker, she
 				"\',\'" + tick->j_quarter[0][i - 1].dump() +
 				"\')";
 		}
+	// commit the transaction
 	request += request_base + request_body + ";\n" + " COMMIT;";
-  res = PQexec(conn, request.c_str());
+	// execute the transaction, if something went wrong ROLLBACK to continue with the other tickers
+	if (exec_query(request))
+		exec_query("ROLLBACK");
+	return (false);
+}
+
+// execute a query
+bool data_base::exec_query(std::string query)
+{
+  PGresult *res;
+	char *error_message;
+	std::regex err_check (".*duplicate.*");
+
+  res = PQexec(conn, query.c_str());
+	// if the query is not well execute return error, and print error
   if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
 			error_message = PQresultErrorMessage(res);
-			printf(SEPARATOR "%s" SEPARATOR, error_message.c_str());
+			printf(SEPARATOR "%s" SEPARATOR, error_message);
 			if (!(std::regex_search(error_message, err_check, std::regex_constants::match_any)))
 				{
-					printf("AAAA\n");
-					std::cerr << "Error: executing the following request:\n" + request + "\n";
-					exit(2);
+					PQclear(res);
+					PQfinish(conn);
+					exit(EXIT_FAILURE);
 				}
 			PQclear(res);
-			PQexec(conn, "ROLLBACK");
 			return (true);
 		}
-  // res = PQexec(conn, "COMMIT");
-  // if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	// {
-	//   std::cerr << "Error: executing the following request:\nCOMMIT\n";
-	//   PQclear(res);
-	//   PQfinish(conn);
-	//   exit(EXIT_FAILURE);
-	// }
   PQclear(res);
 	return (false);
 }
 
+// end the connection
 void data_base::finish_db()
 {
   PQfinish(conn);

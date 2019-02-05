@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/03 11:05:18 by Mateo                                    */
-/*   Updated: 2019/02/01 16:33:03 by Mateo                                    */
+/*   Updated: 2019/02/05 12:26:12 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 #ifndef TICKERS_H
 
+// connect to the data base
 PGconn *connect_db(const char *db_name,
 									 const char *db_user,
 									 const char *db_pass,
@@ -24,6 +25,7 @@ PGconn *connect_db(const char *db_name,
 
 	printf(F_LOG("Connecting to: %s (%s)\n"), db_name, db_host);
 	conn = PQsetdbLogin(db_host, NULL, NULL, NULL, db_name, db_user, db_pass);
+	// switch between possible errors
 	switch(PQstatus(conn))
 		{
 		case CONNECTION_OK:
@@ -64,11 +66,13 @@ PGconn *connect_db(const char *db_name,
 	return (conn);
 }
 
+// get the data from the data base
 void get_data(PGconn *conn, char *request, tickers_t *tickers)
 {
 	PGresult *res;
 	char *cell_value;
 
+	// exec query
 	res = PQexec(conn, request);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
@@ -77,8 +81,10 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 			PQfinish(conn);
 			exit(2);
 		}
+	// get tuples and cols of query
 	tickers->n_tuples = (size_t)PQntuples(res);
 	tickers->n_cols = (size_t)PQnfields(res);
+	// malloc the array of len and the arry of tickers
 	if ( !(tickers->tick_len =
 				 (unsigned char **)malloc(sizeof(unsigned char *) * tickers->n_tuples)) ||
 			 !(tickers->tickers = (char ***)malloc(sizeof(char **) * tickers->n_tuples)))
@@ -86,8 +92,10 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 			dprintf(2, "Error: malloc in get_data\n");
 			exit(EXIT_FAILURE);
 		}
+	// for each row
 	for (size_t i = 0; i < tickers->n_tuples; i++)
 		{
+			// malloc each len and ticker of the row
 			if ( !(tickers->tick_len[i] =
 						 (unsigned char *)malloc(sizeof(unsigned char) * tickers->n_cols)) ||
 					 !(tickers->tickers[i] = (char **)malloc(sizeof(char *) * tickers->n_cols)))
@@ -95,6 +103,7 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 					dprintf(2, "Error: malloc in get_data\n");
 					exit(EXIT_FAILURE);
 				}
+			// for each cell in row assign the len of the ticker and the ticker itself
 			for (size_t j = 0; j < tickers->n_cols; j++)
 				{
 					cell_value = PQgetvalue(res, i, j);
@@ -104,6 +113,7 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 		}
 }
 
+// free the array allocated before
 void clean_tickers(tickers_t *tickers)
 {
 	for (uint32_t i = 0; i < tickers->n_tuples; i++)
