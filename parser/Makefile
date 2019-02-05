@@ -6,7 +6,7 @@
 #    By: Mateo <teorodrip@protonmail.com>                                      #
 #                                                                              #
 #    Created: 2019/01/04 17:47:52 by Mateo                                     #
-#    Updated: 2019/01/22 09:49:19 by Mateo                                     #
+#    Updated: 2019/02/05 14:26:42 by Mateo                                     #
 #                                                                              #
 #******************************************************************************#
 
@@ -34,7 +34,7 @@ OBJ_DIR = objects/
 
 OBJ = $(patsubst %.cpp, $(OBJ_DIR)%.o, $(FUNCS))
 
-INC = $(wildcard $(INC_DIR)*.h)
+INC = $(wildcard $(INC_DIR)*.hpp)
 
 I := 1
 
