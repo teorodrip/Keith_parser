@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/18 15:27:33 by Mateo                                    //
-//   Updated: 2019/02/05 11:10:05 by Mateo                                    //
+//   Updated: 2019/02/07 13:47:49 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -115,6 +115,14 @@ static std::string parse_excel_date(std::string date_str)
 	parsed_date = std::to_string(n_day) + "-" + std::to_string(n_month) +
 		"-" + std::to_string(n_year);
 	return (parsed_date);
+}
+
+bool data_base::upload_ticker_daily(const std::string *values)
+{
+	std::string request("INSERT INTO " TABLE_DAILY_PATH " VALUES " + *values);
+	if (exec_query(request))
+		exec_query("ROLLBACK");
+	return (false);
 }
 
 // upload a ticker quarter and year to the data base

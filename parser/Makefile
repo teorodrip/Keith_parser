@@ -6,7 +6,7 @@
 #    By: Mateo <teorodrip@protonmail.com>                                      #
 #                                                                              #
 #    Created: 2019/01/04 17:47:52 by Mateo                                     #
-#    Updated: 2019/02/05 14:26:42 by Mateo                                     #
+#    Updated: 2019/02/07 14:20:40 by Mateo                                     #
 #                                                                              #
 #******************************************************************************#
 
@@ -23,6 +23,7 @@ CC = g++
 FUNCS = client.cpp \
 		dir_watcher.cpp \
 		parser.cpp \
+		parser_daily.cpp \
 		data_base.cpp \
 		main.cpp
 

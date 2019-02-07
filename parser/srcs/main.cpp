@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/04 17:51:41 by Mateo                                    //
-//   Updated: 2019/02/05 10:48:03 by Mateo                                    //
+//   Updated: 2019/02/07 11:21:33 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -17,7 +17,7 @@ static void parse_from_dir(std::string path)
 {
 	DIR *dir;
 	struct dirent *ent;
-	excel_parser parser;
+	PARSER parser;
 	std::string file_string;
 	std::string path_to_file;
 	std::regex file_format ("^(([^~])+).*\\.xlsx");
@@ -56,7 +56,7 @@ static void parse_from_dir(std::string path)
 
 static void parse_from_watcher()
 {
-	excel_parser parser;
+	PARSER parser;
 	unsigned char n_vm;
 	dir_watcher *watcher;
 	char file_to_parse[NAME_MAX];

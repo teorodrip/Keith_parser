@@ -6,7 +6,7 @@
 //   By: Mateo <teorodrip@protonmail.com>                                     //
 //                                                                            //
 //   Created: 2019/01/08 19:02:25 by Mateo                                    //
-//   Updated: 2019/02/05 10:31:44 by Mateo                                    //
+//   Updated: 2019/02/07 14:44:50 by Mateo                                    //
 //                                                                            //
 // ************************************************************************** //
 
@@ -28,6 +28,7 @@
 
 #define SEPARATOR "======================================================================================\n"
 
+#define PARSER excel_parser_daily
 #define CIQINACTIVE_RTETRIES 4
 #define INVALID_IDNENTIFIER_RETRIES 1
 #define REFRESH_RETRIES 1
@@ -54,8 +55,11 @@
 #define SHEET_1 "Income Statements"
 #define SHEET_2 "Balance Sheet"
 #define SHEET_3 "Cash Flow"
+#define SHEET_DAILY_0 "daily_sheet"
 #define SHEET_NB 4
 #define SHEET_ARR {SHEET_0, SHEET_1, SHEET_2, SHEET_3}
+#define SHEET_NB_DAILY 1
+#define SHEET_ARR_DAILY {SHEET_DAILY_0}
 #define TICKER_START "Ticker/ID"
 #define HALF_TICKER "HALF_OF_TICKER"
 #define END_TICKER "END_OF_TICKER"
@@ -75,6 +79,7 @@
 #define DB_HOST "192.168.27.122"
 #define TABLE_YEAR_PATH "ciq.statements_standard_year"
 #define TABLE_QUARTER_PATH "ciq.statements_standard_quarter"
+#define TABLE_DAILY_PATH "ciq.market_data_daily"
 #define COL_BLOOM_TICKER "ticker_bbg"
 #define COL_PERIOD_DATE "period_date"
 #define COL_INC_FIL_DATE "income_filled_date"
@@ -106,6 +111,13 @@ typedef struct ticker_json_s
 	std::vector<nlohmann::json> j_year[SHEET_NB];
 	std::vector<nlohmann::json> j_quarter[SHEET_NB];
 } ticker_json_t;
+
+typedef struct ticker_daily_s
+{
+	size_t ticker_index;
+	std::string ticker_capiq;
+	std::string ticker_bbg;
+} ticker_daily_t;
 
 typedef struct coord_s
 {
@@ -139,6 +151,7 @@ public:
 									const char *db_pass,
 									const char *db_host);
   bool upload_ticker(ticker_json_t *tick, std::string bloom_ticker, sheet_t *sheets);
+  bool upload_ticker_daily(const std::string *values);
 	bool exec_query(std::string query);
   void finish_db();
 };
@@ -200,6 +213,43 @@ private:
 
 public:
   excel_parser();
+	void init();
+  void load_book(const std::string file_path);
+  void parse_book();
+  void clear_flags();
+  void close_book();
+  void clear_all();
+  void free_all();
+	void clear_bloom_tickers();
+	void clear_ticker_retries();
+	void clear_period_dates();
+};
+
+class excel_parser_daily : public client, public data_base
+{
+private:
+  char **bloom_tickers;
+	// int *ticker_retries;
+	// bool *tickers_in_queue;
+	sheet_t sheets[SHEET_NB];
+  unsigned short n_bloom_tickers;
+  std::string file_path;
+  xlsxioreader book;
+  std::string sheet_names[SHEET_NB];
+  unsigned char vm_id;
+	// queue_t queue;
+  int flags;
+
+  bool issdigit(char *str);
+  void handle_fatal_error(const std::string message);
+	bool handle_cell_error(std::string value);
+  std::string parse_excel_date(const std::string date);
+	bool mark_cell_error(std::string cell_value, sheet_t *sheet);
+	void check_marks(sheet_t *sheet, std::string cell_value, size_t i, size_t j);
+	void parse_tickers();
+
+public:
+  excel_parser_daily();
 	void init();
   void load_book(const std::string file_path);
   void parse_book();
