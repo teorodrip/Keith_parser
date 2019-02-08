@@ -6,14 +6,13 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/03 11:05:18 by Mateo                                    */
-/*   Updated: 2019/02/05 12:26:12 by Mateo                                    */
+/*   Updated: 2019/02/08 10:39:21 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/launcher.h"
 #include <fcntl.h>
 
-#ifndef TICKERS_H
 
 // connect to the data base
 PGconn *connect_db(const char *db_name,
@@ -66,6 +65,7 @@ PGconn *connect_db(const char *db_name,
 	return (conn);
 }
 
+#ifndef TICKERS_H
 // get the data from the data base
 void get_data(PGconn *conn, char *request, tickers_t *tickers)
 {
@@ -113,6 +113,8 @@ void get_data(PGconn *conn, char *request, tickers_t *tickers)
 		}
 }
 
+#endif
+
 // free the array allocated before
 void clean_tickers(tickers_t *tickers)
 {
@@ -127,4 +129,3 @@ void clean_tickers(tickers_t *tickers)
 	free(tickers->tickers);
 }
 
-#endif

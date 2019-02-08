@@ -6,7 +6,7 @@
 /*   By: Mateo <teorodrip@protonmail.com>                                     */
 /*                                                                            */
 /*   Created: 2019/01/02 13:45:42 by Mateo                                    */
-/*   Updated: 2019/02/01 16:31:43 by Mateo                                    */
+/*   Updated: 2019/02/08 10:07:14 by Mateo                                    */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,8 @@
 #define F_PARS_RUN 0x8000000000000000
 #define F_END 0x4000000000000000
 #define F_END_2 0x2000000000000000
+
+#define F_INTERSECT 0x1
 
 #define WRITE_BUFF 1024
 #define BATCH_SIZE 10
@@ -73,7 +75,7 @@ typedef struct tickers_s
 	size_t pos;
 #ifdef TICKERS_H
 	unsigned char (*tick_len)[N_TUPLES][N_COLS];
-	char (*tickers)[N_TUPLES][N_COLS][255];
+	char (*tickers)[N_TUPLES][N_COLS][MAX_TICK_LEN];
 #else
 	unsigned char **tick_len;
 	char ***tickers;
